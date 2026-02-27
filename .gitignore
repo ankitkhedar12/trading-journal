@@ -1,0 +1,10 @@
+
+# common ignores
+node_modules/
+.env
+
+# MacOS
+.DS_Store
+
+# DB
+backend/prisma/*.db

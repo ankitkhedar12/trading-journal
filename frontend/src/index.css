@@ -1,0 +1,66 @@
+@font-face {
+  font-family: 'Exo 2';
+  src: url('/fonts/Exo_2/Exo2-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Oleo Script';
+  src: url('/fonts/Oleo_Script/OleoScript-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Oleo Script';
+  src: url('/fonts/Oleo_Script/OleoScript-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+:root {
+  --bg-light: #f8fafc;
+  --bg-dark: #0f172a;
+  --grid-line-light: rgba(0, 0, 0, 0.05);
+  --grid-line-dark: rgba(255, 255, 255, 0.05);
+  font-family: 'Exo 2', sans-serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--bg-light);
+  background-image: 
+    linear-gradient(var(--grid-line-light) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line-light) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: center bottom;
+  color: #1e293b;
+  transition: background-color 0.3s ease, color 0.3s ease, background-image 0.3s ease;
+  overflow-x: hidden;
+}
+
+[data-theme='dark'] body {
+  background-color: var(--bg-dark);
+  background-image: 
+    linear-gradient(var(--grid-line-dark) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line-dark) 1px, transparent 1px);
+  color: #f1f5f9;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Floating status bar blur effect */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+[data-theme='dark'] .glass-effect {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}

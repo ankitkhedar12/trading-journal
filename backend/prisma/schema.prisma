@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // In a real app this would be hashed
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  entries   JournalEntry[]
+}
+
+model Trade {
+  id           String   @id @default(uuid())
+  symbol       String
+  volume       String   // e.g "0.05/0.05"
+  entryPrice   Float
+  closePrice   Float
+  pnl          Float
+  netPnl       Float
+  chargesSwap  String   // e.g "0.00/0.00"
+  openedAt     DateTime
+  closedAt     DateTime
+  orderId      String   @unique
+  status       String   // e.g "Closed"
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model JournalEntry {
+  id        String   @id @default(uuid())
+  date      DateTime
+  subject   String
+  text      String
+  tags      String[]
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
