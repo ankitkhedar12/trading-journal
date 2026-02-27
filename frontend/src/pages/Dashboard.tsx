@@ -6,6 +6,7 @@ import { ShowChart, CalendarMonth } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { getBaseUrl } from '../utils/config';
 
 const MotionPaper = motion(Paper);
 
@@ -50,14 +51,14 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                const resStats = await fetch('http://localhost:3000/api/trades/dashboard', {
+                const resStats = await fetch(`${getBaseUrl()}/api/trades/dashboard`, {
                     headers: { 'Authorization': `Bearer ${user?.token}` }
                 });
                 const dataStats = await resStats.json();
                 setStats(dataStats);
 
                 // Also fetch trades to build out the correct calendar
-                const resTrades = await fetch('http://localhost:3000/api/trades', {
+                const resTrades = await fetch(`${getBaseUrl()}/api/trades`, {
                     headers: { 'Authorization': `Bearer ${user?.token}` }
                 });
                 const dataTrades = await resTrades.json();

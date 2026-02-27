@@ -5,18 +5,9 @@ import { PostAdd } from '@mui/icons-material';
 import Papa from 'papaparse';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { getBaseUrl } from '../utils/config';
 
-interface TradeData {
-    id: string;
-    symbol: string;
-    volume: string;
-    entryPrice: number;
-    closePrice: number;
-    pnl: number;
-    openedAt: string;
-    orderId: string;
-    status: string;
-}
+
 
 const ImportData = () => {
     const [isHovered, setIsHovered] = useState(false);
@@ -102,7 +93,7 @@ const ImportData = () => {
                                     return;
                                 }
 
-                                const res = await fetch('http://localhost:3000/api/trades/import', {
+                                const res = await fetch(`${getBaseUrl()}/api/trades/import`, {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -141,14 +132,6 @@ const ImportData = () => {
 
     const triggerFileInput = () => {
         fileInputRef.current?.click();
-    };
-
-    const getPnlColor = (pnl: number) => {
-        return pnl > 0 ? '#4caf50' : pnl < 0 ? '#f44336' : '#9e9e9e';
-    };
-
-    const getPnlBg = (pnl: number) => {
-        return pnl > 0 ? 'rgba(76, 175, 80, 0.1)' : pnl < 0 ? 'rgba(244, 67, 54, 0.1)' : 'rgba(158, 158, 158, 0.1)';
     };
 
     return (

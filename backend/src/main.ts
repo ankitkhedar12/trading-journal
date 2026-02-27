@@ -3,7 +3,11 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.enableCors(); // allow React frontend to connect easily
+  app.enableCors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Vite default port or Vercel
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+  });
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

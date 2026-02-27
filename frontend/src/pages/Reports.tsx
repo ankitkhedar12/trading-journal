@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Box, Typography, Paper, CircularProgress } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { getBaseUrl } from '../utils/config';
 
 interface TradeData {
     id: string;
@@ -23,7 +24,7 @@ const Reports = () => {
     useEffect(() => {
         const fetchTrades = async () => {
             try {
-                const response = await fetch('http://localhost:3000/api/trades', {
+                const response = await fetch(`${getBaseUrl()}/api/trades`, {
                     headers: {
                         'Authorization': `Bearer ${user?.token}`
                     }
