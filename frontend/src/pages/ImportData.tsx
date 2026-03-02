@@ -140,7 +140,7 @@ const ImportData = () => {
                 <motion.div
                     initial={{ opacity: 0, x: -50 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.5, type: 'spring' }}
+                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                 >
                     <Typography variant="h4" sx={{ mb: 4, fontWeight: 'bold' }}>Import Data</Typography>
 
