@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from 'react-router-dom';
-import { Box, AppBar, Toolbar, Typography, IconButton, Container, Button, Menu, MenuItem, Avatar } from '@mui/material';
+import { Box, Typography, IconButton, Container, Button, Menu, MenuItem, Avatar } from '@mui/material';
 import {
     Brightness4,
     Brightness7,
@@ -12,7 +12,7 @@ import {
 } from '@mui/icons-material';
 import { useThemeContext } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-import { motion } from 'framer-motion';
+
 import { useState } from 'react';
 
 const Layout = () => {
@@ -33,103 +33,100 @@ const Layout = () => {
         logout();
     };
 
-    const techStack = [
-        { name: 'React (Frontend)' },
-        { name: 'NestJS (API)' },
-        { name: 'Supabase (DB)' },
-        { name: 'MUI (UI)' },
-        { name: 'Framer Motion (Physics)' },
-        { name: 'Prisma (ORM)' }
-    ];
+
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
-            <AppBar
-                position="sticky"
-                elevation={0}
-                className="glass-effect"
-                sx={{ backgroundColor: mode === 'light' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(15, 23, 42, 0.7)', transition: 'background-color 0.3s' }}
-            >
-                <Container maxWidth="xl">
-                    <Toolbar disableGutters sx={{ py: 1 }}>
 
-                        {/* Image Logo */}
-                        <Box component={NavLink} to="/" sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            textDecoration: 'none',
-                            mr: 4
-                        }}>
-                            <img src="/Logo.png" alt="Journal Logo" style={{ height: '40px', objectFit: 'contain' }} />
-                        </Box>
+            {/* Top Left Logo */}
+            <Box component={NavLink} to="/" sx={{ position: 'absolute', top: 24, left: 24, zIndex: 1000 }}>
+                <img src="/Logo.png" alt="Journal Logo" style={{ height: '40px', objectFit: 'contain' }} />
+            </Box>
 
-                        <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, gap: 1 }}>
-                            <Button component={NavLink} to="/dashboard" startIcon={<DashboardIcon />}
-                                sx={{ color: 'text.secondary', '&.active': { color: 'primary.main', backgroundColor: 'action.selected' } }}
-                            >
-                                Dashboard
-                            </Button>
-                            <Button component={NavLink} to="/journal" startIcon={<JournalIcon />}
-                                sx={{ color: 'text.secondary', '&.active': { color: 'primary.main', backgroundColor: 'action.selected' } }}
-                            >
-                                Journal
-                            </Button>
-                            <Button component={NavLink} to="/reports" startIcon={<ReportsIcon />}
-                                sx={{ color: 'text.secondary', '&.active': { color: 'primary.main', backgroundColor: 'action.selected' } }}
-                            >
-                                Reports
-                            </Button>
-                            <Button component={NavLink} to="/import" startIcon={<FileUploadIcon />}
-                                sx={{ color: 'text.secondary', '&.active': { color: 'primary.main', backgroundColor: 'action.selected' } }}
-                            >
-                                Import
-                            </Button>
-                            <Button component={NavLink} to="/settings" startIcon={<SettingsIcon />}
-                                sx={{ color: 'text.secondary', '&.active': { color: 'primary.main', backgroundColor: 'action.selected' } }}
-                            >
-                                Settings
-                            </Button>
-                        </Box>
+            {/* Top Right Controls */}
+            <Box sx={{ position: 'absolute', top: 24, right: 24, zIndex: 1000, display: 'flex', alignItems: 'center', gap: 2, p: 1, borderRadius: 10 }} className="glass-effect">
+                <IconButton onClick={toggleTheme} color="inherit" sx={{ color: 'text.primary' }}>
+                    {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+                </IconButton>
 
-                        <Box sx={{ flexGrow: 0, display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <IconButton onClick={toggleTheme} color="inherit" sx={{ color: 'text.primary' }}>
-                                {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
-                            </IconButton>
+                <IconButton onClick={handleMenu} sx={{ p: 0 }}>
+                    <Avatar sx={{ bgcolor: 'primary.main', width: 36, height: 36, fontWeight: 'bold' }}>
+                        {user?.email?.[0].toUpperCase()}
+                    </Avatar>
+                </IconButton>
+                <Menu
+                    id="menu-appbar"
+                    anchorEl={anchorEl}
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                    keepMounted
+                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                    open={Boolean(anchorEl)}
+                    onClose={handleClose}
+                    slotProps={{ paper: { sx: { mt: 1, minWidth: 200, borderRadius: 3, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' } } }}
+                >
+                    <MenuItem disabled sx={{ opacity: '1 !important', borderBottom: '1px solid', borderColor: 'divider', mb: 1 }}>
+                        <Typography variant="body2" color="text.secondary">{user?.email}</Typography>
+                    </MenuItem>
+                    <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+                        <Logout sx={{ mr: 2, fontSize: 20 }} /> Logout
+                    </MenuItem>
+                </Menu>
+            </Box>
 
-                            <IconButton onClick={handleMenu} sx={{ p: 0 }}>
-                                <Avatar sx={{ bgcolor: 'primary.main', width: 36, height: 36, fontWeight: 'bold' }}>
-                                    {user?.email?.[0].toUpperCase()}
-                                </Avatar>
-                            </IconButton>
-                            <Menu
-                                id="menu-appbar"
-                                anchorEl={anchorEl}
-                                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                                keepMounted
-                                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                                open={Boolean(anchorEl)}
-                                onClose={handleClose}
-                                slotProps={{ paper: { sx: { mt: 1, minWidth: 200, borderRadius: 3, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' } } }}
-                            >
-                                <MenuItem disabled sx={{ opacity: '1 !important', borderBottom: '1px solid', borderColor: 'divider', mb: 1 }}>
-                                    <Typography variant="body2" color="text.secondary">{user?.email}</Typography>
-                                </MenuItem>
-                                <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
-                                    <Logout sx={{ mr: 2, fontSize: 20 }} /> Logout
-                                </MenuItem>
-                            </Menu>
-                        </Box>
-                    </Toolbar>
-                </Container>
-            </AppBar>
-
-            <Box component="main" sx={{ flexGrow: 1, p: { xs: 2, md: 4 }, pb: 12 }}>
+            <Box component="main" sx={{ flexGrow: 1, p: { xs: 2, md: 4 }, pt: { xs: 12, md: 12 }, pb: 16 }}>
                 <Container maxWidth="xl">
                     <Outlet />
                 </Container>
             </Box>
 
-            {/* Floating Status Bar */}
+            {/* Floating Navigation Dock */}
+            <Box
+                sx={{
+                    position: 'fixed',
+                    bottom: 24,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    zIndex: 1000,
+                    display: 'flex',
+                    gap: { xs: 0.5, md: 1 },
+                    padding: '8px 16px',
+                    borderRadius: 8,
+                    whiteSpace: 'nowrap',
+                    width: { xs: '95%', sm: 'auto' },
+                    justifyContent: 'center',
+                    overflowX: 'auto',
+                    '::-webkit-scrollbar': { display: 'none' }
+                }}
+                className="glass-effect"
+            >
+                <Button component={NavLink} to="/dashboard" startIcon={<DashboardIcon />}
+                    sx={{ color: 'text.secondary', borderRadius: 4, px: { xs: 2, md: 3 }, py: 1, '&.active': { color: 'primary.main', backgroundColor: 'rgba(33, 150, 243, 0.1)' } }}
+                >
+                    Dashboard
+                </Button>
+                <Button component={NavLink} to="/journal" startIcon={<JournalIcon />}
+                    sx={{ color: 'text.secondary', borderRadius: 4, px: { xs: 2, md: 3 }, py: 1, '&.active': { color: 'primary.main', backgroundColor: 'rgba(33, 150, 243, 0.1)' } }}
+                >
+                    Journal
+                </Button>
+                <Button component={NavLink} to="/reports" startIcon={<ReportsIcon />}
+                    sx={{ color: 'text.secondary', borderRadius: 4, px: { xs: 2, md: 3 }, py: 1, '&.active': { color: 'primary.main', backgroundColor: 'rgba(33, 150, 243, 0.1)' } }}
+                >
+                    Reports
+                </Button>
+                <Button component={NavLink} to="/import" startIcon={<FileUploadIcon />}
+                    sx={{ color: 'text.secondary', borderRadius: 4, px: { xs: 2, md: 3 }, py: 1, '&.active': { color: 'primary.main', backgroundColor: 'rgba(33, 150, 243, 0.1)' } }}
+                >
+                    Import
+                </Button>
+                <Button component={NavLink} to="/settings" startIcon={<SettingsIcon />}
+                    sx={{ color: 'text.secondary', borderRadius: 4, px: { xs: 2, md: 3 }, py: 1, '&.active': { color: 'primary.main', backgroundColor: 'rgba(33, 150, 243, 0.1)' } }}
+                >
+                    Settings
+                </Button>
+            </Box>
+
+            {/* Floating Status Bar (Tech Stack) - Commented out per request 
             <Box
                 sx={{
                     position: 'fixed',
@@ -173,6 +170,7 @@ const Layout = () => {
                     </motion.div>
                 ))}
             </Box>
+            */}
         </Box>
     );
 };
