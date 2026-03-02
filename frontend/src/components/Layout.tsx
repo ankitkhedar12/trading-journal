@@ -73,8 +73,8 @@ const Layout = () => {
                 </Menu>
             </Box>
 
-            <Box component="main" sx={{ flexGrow: 1, p: { xs: 2, md: 4 }, pt: { xs: 12, md: 12 }, pb: 16 }}>
-                <Container maxWidth="xl">
+            <Box component="main" sx={{ flexGrow: 1, p: { xs: 2, md: 4 }, pt: { xs: 12, md: 12 }, pb: 24 }}>
+                <Container maxWidth="xl" sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <Outlet />
                 </Container>
             </Box>
