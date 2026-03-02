@@ -5,6 +5,7 @@ import ImportData from './pages/ImportData';
 import Login from './pages/Login';
 import Journal from './pages/Journal';
 import Reports from './pages/Reports';
+import Settings from './pages/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -19,7 +20,7 @@ function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="journal" element={<Journal />} />
             <Route path="reports" element={<Reports />} />
-            <Route path="settings" element={<Dashboard />} /> {/* Placeholder */}
+            <Route path="settings" element={<Settings />} />
             <Route path="import" element={<ImportData />} />
           </Route>
         </Route>

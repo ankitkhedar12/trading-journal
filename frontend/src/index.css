@@ -25,13 +25,18 @@
   --grid-line-light: rgba(0, 0, 0, 0.05);
   --grid-line-dark: rgba(255, 255, 255, 0.05);
   font-family: 'Exo 2', sans-serif;
+
+  /* Liquid Glass Variables */
+  --lg-bg-color: rgba(255, 255, 255, 0.45);
+  --lg-highlight: rgba(255, 255, 255, 0.9);
+  --lg-shadow-light: rgba(0, 0, 0, 0.1);
 }
 
 body {
   margin: 0;
   min-height: 100vh;
   background-color: var(--bg-light);
-  background-image: 
+  background-image:
     linear-gradient(var(--grid-line-light) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid-line-light) 1px, transparent 1px);
   background-size: 40px 40px;
@@ -41,9 +46,25 @@ body {
   overflow-x: hidden;
 }
 
+[data-glass='clear'] {
+  --lg-bg-color: rgba(255, 255, 255, 0.05);
+  --lg-highlight: rgba(255, 255, 255, 0.5);
+}
+
+[data-theme='dark'] {
+  --lg-bg-color: rgba(15, 23, 42, 0.55);
+  --lg-highlight: rgba(255, 255, 255, 0.2);
+  --lg-shadow-light: rgba(0, 0, 0, 0.3);
+}
+
+[data-theme='dark'][data-glass='clear'] {
+  --lg-bg-color: rgba(15, 23, 42, 0.05);
+  --lg-highlight: rgba(255, 255, 255, 0.1);
+}
+
 [data-theme='dark'] body {
   background-color: var(--bg-dark);
-  background-image: 
+  background-image:
     linear-gradient(var(--grid-line-dark) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid-line-dark) 1px, transparent 1px);
   color: #f1f5f9;
@@ -53,14 +74,60 @@ body {
   box-sizing: border-box;
 }
 
-/* Floating status bar blur effect */
+/* Component Level Cards */
 .glass-effect {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
 [data-theme='dark'] .glass-effect {
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Liquid Mirror Effect for Floating Elements */
+.lg-container {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 6px 12px var(--lg-shadow-light), 0 0 20px var(--lg-shadow-light);
+  border-radius: inherit;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+}
+
+.lg-filter {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  filter: url(#lg-dist);
+  isolation: isolate;
+  pointer-events: none;
+}
+
+.lg-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--lg-bg-color);
+  pointer-events: none;
+}
+
+.lg-specular {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  overflow: hidden;
+  box-shadow: inset 1px 1px 0 var(--lg-highlight), inset 0 0 5px var(--lg-highlight);
+  pointer-events: none;
+}
+
+.lg-content {
+  position: relative;
+  z-index: 3;
 }

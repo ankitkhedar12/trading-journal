@@ -33,7 +33,7 @@ const Login = () => {
             <motion.div
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ type: "spring", stiffness: 100, damping: 15 }}
+                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                 style={{ width: '100%', maxWidth: 400 }}
             >
                 <Paper

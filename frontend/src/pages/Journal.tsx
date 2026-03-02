@@ -13,7 +13,8 @@ const FloatingCard = ({ children, delay = 0, sx = {} }: { children: React.ReactN
         className="glass-effect"
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 100, damping: 15, delay }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay }}
+        whileHover={{ scale: 1.01, zIndex: 10, transition: { duration: 0.3, ease: 'easeOut' } }}
         sx={{ p: 4, borderRadius: 4, position: 'relative', overflow: 'hidden', ...sx }}
     >
         {children}

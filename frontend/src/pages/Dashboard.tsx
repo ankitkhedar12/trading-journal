@@ -15,8 +15,8 @@ const FloatingCard = ({ children, delay = 0 }: { children: ReactNode, delay?: nu
         className="glass-effect"
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 100, damping: 12, delay }}
-        whileHover={{ scale: 1.01, zIndex: 10 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay }}
+        whileHover={{ scale: 1.01, zIndex: 10, transition: { duration: 0.3, ease: 'easeOut' } }}
         sx={{ p: 3, borderRadius: 4, position: 'relative', overflow: 'hidden', height: '100%' }}
     >
         {children}
@@ -35,7 +35,7 @@ const CustomDot = (props: any) => {
             strokeWidth={2}
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.5 + index * 0.1, duration: 0.5, type: "spring" }}
+            transition={{ delay: 0.5 + index * 0.1, duration: 0.6, ease: "easeOut" }}
             style={{ filter: 'drop-shadow(0 0 8px rgba(33, 150, 243, 0.8))' }}
         />
     );
@@ -154,7 +154,7 @@ const Dashboard = () => {
                                         stroke="#2196f3"
                                         strokeWidth={4}
                                         dot={<CustomDot />}
-                                        activeDot={{ r: 8, fill: '#fff', stroke: '#2196f3', strokeWidth: 3 }}
+                                        activeDot={{ r: 8, fill: '#fff', stroke: '#2196f3', strokeWidth: 7 }}
                                         animationDuration={2000}
                                         animationEasing="ease-out"
                                     />
@@ -204,7 +204,7 @@ const Dashboard = () => {
                                 return (
                                     <Box key={i}>
                                         <motion.div
-                                            whileHover={hasTrades ? { scale: 1.1, rotate: Math.random() * 6 - 3, zIndex: 10 } : {}}
+                                            whileHover={hasTrades ? { scale: 1.04, y: -4, zIndex: 10, transition: { duration: 0.2, ease: "easeOut" } } : {}}
                                             style={{ position: 'relative' }}
                                             onHoverStart={() => setHoveredDay(day)}
                                             onHoverEnd={() => setHoveredDay(null)}
