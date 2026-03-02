@@ -1,8 +1,8 @@
-import { Box, Typography, Paper, CircularProgress } from '@mui/material';
+import { Box, Typography, Paper, CircularProgress, IconButton } from '@mui/material';
 import { motion } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
-import { ShowChart, CalendarMonth } from '@mui/icons-material';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, subMonths, addMonths } from 'date-fns';
+import { ShowChart, CalendarMonth, ChevronLeft, ChevronRight } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -44,6 +44,7 @@ const CustomDot = (props: any) => {
 const Dashboard = () => {
     const { user } = useAuth();
     const [hoveredDay, setHoveredDay] = useState<Date | null>(null);
+    const [currentDate, setCurrentDate] = useState<Date>(new Date());
     const [stats, setStats] = useState<any>(null);
     const [trades, setTrades] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -96,9 +97,8 @@ const Dashboard = () => {
         });
     }
 
-    const today = new Date();
-    const monthStart = startOfMonth(today);
-    const monthEnd = endOfMonth(today);
+    const monthStart = startOfMonth(currentDate);
+    const monthEnd = endOfMonth(currentDate);
     const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
     const latestTotalPnl = chartData.length > 0 ? chartData[chartData.length - 1].pnl : 0;
@@ -168,9 +168,19 @@ const Dashboard = () => {
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                 <Box sx={{ flex: '1 1 60%', minWidth: 300 }}>
                     <FloatingCard delay={0.3}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                            <CalendarMonth sx={{ mr: 1, color: 'primary.main' }} />
-                            <Typography variant="h5">Monthly Calendar ({format(today, 'MMMM')})</Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <CalendarMonth sx={{ mr: 1, color: 'primary.main' }} />
+                                <Typography variant="h5">Monthly Calendar ({format(currentDate, 'MMMM yyyy')})</Typography>
+                            </Box>
+                            <Box>
+                                <IconButton onClick={() => setCurrentDate(subMonths(currentDate, 1))}>
+                                    <ChevronLeft />
+                                </IconButton>
+                                <IconButton onClick={() => setCurrentDate(addMonths(currentDate, 1))}>
+                                    <ChevronRight />
+                                </IconButton>
+                            </Box>
                         </Box>
                         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1 }}>
                             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (

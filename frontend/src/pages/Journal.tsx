@@ -1,8 +1,10 @@
-import { Box, Typography, Paper, TextField, Button, Avatar, Chip } from '@mui/material';
+import { Box, Typography, Paper, TextField, Button, Avatar, Chip, CircularProgress } from '@mui/material';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { AutoAwesome, Send } from '@mui/icons-material';
+import { useAuth } from '../context/AuthContext';
+import { getBaseUrl } from '../utils/config';
 
 const MotionPaper = motion(Paper);
 
@@ -18,14 +20,64 @@ const FloatingCard = ({ children, delay = 0, sx = {} }: { children: React.ReactN
     </MotionPaper>
 );
 
-const mockEntries = [
-    { id: 1, date: '2026-02-23', subject: 'Patience paid off', text: 'Held my winner and did not exit early. The setups are working when I stick to the plan.', tags: ['Discipline', 'Win'] },
-    { id: 2, date: '2026-02-22', subject: 'Overtrading afternoon', text: 'Fomo kicked in after the European session close. Looked for setups that were not there. Took unnecessary losses.', tags: ['FOMO', 'Loss'] }
-];
-
 const Journal = () => {
+    const { user } = useAuth();
     const [entry, setEntry] = useState('');
     const [subject, setSubject] = useState('');
+    const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+    const [entries, setEntries] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const fetchEntries = async () => {
+        try {
+            const res = await fetch(`${getBaseUrl()}/api/journal`, {
+                headers: { 'Authorization': `Bearer ${user?.token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setEntries(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch journal entries:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (user) fetchEntries();
+    }, [user]);
+
+    const handleSave = async () => {
+        if (!subject || !entry) return;
+        setIsSaving(true);
+        try {
+            const res = await fetch(`${getBaseUrl()}/api/journal`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${user?.token}`
+                },
+                body: JSON.stringify({
+                    subject,
+                    text: entry,
+                    date: date,
+                    tags: [] // future enhancement: add tag selector
+                })
+            });
+
+            if (res.ok) {
+                setSubject('');
+                setEntry('');
+                fetchEntries(); // reload the list
+            }
+        } catch (error) {
+            console.error("Failed to save entry:", error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     const todayFormatted = format(new Date(), 'EEEE, MMMM do, yyyy');
 
@@ -37,18 +89,30 @@ const Journal = () => {
                     <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Daily Reflections</Typography>
                 </Box>
                 <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-                    Today is {todayFormatted}. Take a moment to log your psychological state and observations from today's session.
+                    Today is {todayFormatted}. Take a moment to log your psychological state and observations.
                 </Typography>
 
                 <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                    <TextField
-                        fullWidth
-                        label="Theme or Subject (e.g., 'Stick to the plan')"
-                        variant="outlined"
-                        value={subject}
-                        onChange={(e) => setSubject(e.target.value)}
-                        sx={{ backgroundColor: 'background.paper', borderRadius: 2 }}
-                    />
+                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                        <TextField
+                            fullWidth
+                            label="Theme or Subject (e.g., 'Stick to the plan')"
+                            variant="outlined"
+                            value={subject}
+                            onChange={(e) => setSubject(e.target.value)}
+                            sx={{ backgroundColor: 'background.paper', borderRadius: 2, flex: 2, minWidth: 250 }}
+                        />
+                        <TextField
+                            type="date"
+                            label="Entry Date"
+                            variant="outlined"
+                            InputLabelProps={{ shrink: true }}
+                            value={date}
+                            onChange={(e) => setDate(e.target.value)}
+                            sx={{ backgroundColor: 'background.paper', borderRadius: 2, flex: 1, minWidth: 150 }}
+                        />
+                    </Box>
+
                     <TextField
                         fullWidth
                         multiline
@@ -63,11 +127,13 @@ const Journal = () => {
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                         <Button
                             variant="contained"
-                            endIcon={<Send />}
+                            disabled={isSaving || !subject || !entry}
+                            onClick={handleSave}
+                            endIcon={isSaving ? <CircularProgress size={20} color="inherit" /> : <Send />}
                             size="large"
                             sx={{ borderRadius: 8, px: 4, py: 1.5, fontWeight: 'bold' }}
                         >
-                            Save Entry
+                            {isSaving ? 'Saving...' : 'Save Entry'}
                         </Button>
                     </Box>
                 </Box>
@@ -75,29 +141,41 @@ const Journal = () => {
 
             <Typography variant="h5" sx={{ fontWeight: 'bold', mt: 4, mb: 1 }}>Recent Entries</Typography>
 
-            {mockEntries.map((item, index) => (
-                <FloatingCard key={item.id} delay={0.2 + (index * 0.1)} sx={{ p: 3 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.dark', fontWeight: 'bold' }}>
-                                {format(new Date(item.date), 'dd')}
-                            </Avatar>
-                            <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 'bold', lineHeight: 1.2 }}>{item.subject}</Typography>
-                                <Typography variant="caption" color="text.secondary">{format(new Date(item.date), 'MMMM do, yyyy')}</Typography>
+            {isLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                    <CircularProgress />
+                </Box>
+            ) : entries.length === 0 ? (
+                <Paper className="glass-effect" sx={{ p: 4, textAlign: 'center', borderRadius: 4 }}>
+                    <Typography color="text.secondary">No journal entries found. Write your first reflection above!</Typography>
+                </Paper>
+            ) : (
+                entries.map((item, index) => (
+                    <FloatingCard key={item.id} delay={0.2 + (index * 0.1)} sx={{ p: 3 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.dark', fontWeight: 'bold' }}>
+                                    {format(new Date(item.date), 'dd')}
+                                </Avatar>
+                                <Box>
+                                    <Typography variant="h6" sx={{ fontWeight: 'bold', lineHeight: 1.2 }}>{item.subject}</Typography>
+                                    <Typography variant="caption" color="text.secondary">{format(new Date(item.date), 'MMMM do, yyyy')}</Typography>
+                                </Box>
                             </Box>
+                            {item.tags && item.tags.length > 0 && (
+                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                    {item.tags.map((tag: string) => (
+                                        <Chip key={tag} label={tag} size="small" variant="outlined" color={tag === 'Win' ? 'success' : tag === 'Loss' ? 'error' : 'primary'} />
+                                    ))}
+                                </Box>
+                            )}
                         </Box>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                            {item.tags.map(tag => (
-                                <Chip key={tag} label={tag} size="small" variant="outlined" color={tag === 'Win' ? 'success' : tag === 'Loss' ? 'error' : 'primary'} />
-                            ))}
-                        </Box>
-                    </Box>
-                    <Typography variant="body1" sx={{ mt: 2, color: 'text.primary', lineHeight: 1.6 }}>
-                        {item.text}
-                    </Typography>
-                </FloatingCard>
-            ))}
+                        <Typography variant="body1" sx={{ mt: 2, color: 'text.primary', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                            {item.text}
+                        </Typography>
+                    </FloatingCard>
+                ))
+            )}
 
         </Box>
     );
