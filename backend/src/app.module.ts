@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { JournalModule } from './journal/journal.module';
 import { TradesModule } from './trades/trades.module';
+import { PropAccountModule } from './prop-account/prop-account.module';
 
 @Module({
   imports: [
@@ -10,6 +11,7 @@ import { TradesModule } from './trades/trades.module';
     AuthModule,
     JournalModule,
     TradesModule,
+    PropAccountModule,
   ],
 })
 export class AppModule { }

@@ -15,6 +15,22 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   entries   JournalEntry[]
+  trades    Trade[]
+  propAccounts PropAccount[]
+}
+
+model PropAccount {
+  id           String   @id @default(uuid())
+  firmName     String   // e.g., "The Funded Room"
+  accountType  String   // "1_STEP", "2_STEP", "INSTANT"
+  accountSize  Float
+  status       String   // "PHASE_1", "PHASE_2", "FUNDED", "FAILED"
+  
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Trade {
@@ -30,6 +46,10 @@ model Trade {
   closedAt     DateTime
   orderId      String   @unique
   status       String   // e.g "Closed"
+  broker       String   @default("vantage") // e.g "vantage", "the_funded_room"
+
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id])
   
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -46,4 +66,13 @@ model JournalEntry {
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  email     String
+  token     String   // bcrypt-hashed 6-digit OTP
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
 }

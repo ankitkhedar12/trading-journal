@@ -1,11 +1,22 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable }  from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 
 @Injectable()
 export class TradesService {
     constructor(private prisma: PrismaService) { }
 
-    async importTrades(trades: any[]) {
+    async onModuleInit() {
+        // Backfill any existing trades that don't have a userId
+        const defaultUser = await this.prisma.user.findFirst();
+        if (defaultUser) {
+            await this.prisma.trade.updateMany({
+                where: { userId: null },
+                data: { userId: defaultUser.id },
+            });
+        }
+    }
+
+    async importTrades(trades: any[], userId: string, broker: string) {
         // Basic bulk insert or upsert using orderId to prevent duplicates
         const results = [];
         for (const trade of trades) {
@@ -24,6 +35,8 @@ export class TradesService {
                     closedAt: trade.closedAt ? new Date(this.parseDate(trade.closedAt)) : new Date(this.parseDate(trade.openedAt)),
                     orderId: trade.orderId,
                     status: trade.status || 'Closed',
+                    broker,
+                    userId,
                 }
             });
             results.push(saved);
@@ -31,8 +44,12 @@ export class TradesService {
         return { count: results.length };
     }
 
-    async getDashboardStats() {
+    async getDashboardStats(userId: string, broker?: string) {
+        const where: any = { userId };
+        if (broker) where.broker = broker;
+
         const allTrades = await this.prisma.trade.findMany({
+            where,
             orderBy: { openedAt: 'asc' }
         });
 
@@ -68,8 +85,12 @@ export class TradesService {
         };
     }
 
-    async getTrades() {
+    async getTrades(userId: string, broker?: string) {
+        const where: any = { userId };
+        if (broker) where.broker = broker;
+
         return this.prisma.trade.findMany({
+            where,
             orderBy: { openedAt: 'desc' }
         });
     }

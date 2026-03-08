@@ -24,7 +24,7 @@ const Settings = () => {
                 App Settings
             </Typography>
 
-            <Card className="lg-container" sx={{ background: 'transparent', borderRadius: 4, overflow: 'visible' }}>
+            <Card className="lg-container" sx={{ background: 'transparent', borderRadius: '30px', overflow: 'visible' }}>
                 <div className="lg-filter" />
                 <div className="lg-overlay" />
                 <div className="lg-specular" />

@@ -38,7 +38,7 @@ const getDesignTokens = (mode: 'light' | 'dark') => ({
     subtitle1: { fontFamily: '"Oleo Script", cursive' },
   },
   shape: {
-    borderRadius: 16,
+    borderRadius: 30,
   },
   components: {
     MuiTypography: {
@@ -66,7 +66,7 @@ const getDesignTokens = (mode: 'light' | 'dark') => ({
       styleOverrides: {
         root: {
           textTransform: 'none',
-          borderRadius: 8,
+          borderRadius: 10,
           fontWeight: 600,
           transition: 'all 0.2s ease-in-out',
         },
@@ -77,6 +77,10 @@ const getDesignTokens = (mode: 'light' | 'dark') => ({
         root: {
           '& .MuiInputBase-root': {
             backgroundColor: mode === 'light' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(15, 23, 42, 0.8)',
+            borderRadius: '10px',
+          },
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderRadius: '10px',
           },
         },
       },

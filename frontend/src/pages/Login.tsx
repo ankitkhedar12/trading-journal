@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Box, Button, TextField, Typography, Paper, Alert } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
+import { useThemeContext } from '../context/ThemeContext';
 
 const Login = () => {
+    const { mode } = useThemeContext();
     const { login, isAuthenticated } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -40,7 +42,7 @@ const Login = () => {
                     className="glass-effect"
                     sx={{
                         p: 5,
-                        borderRadius: 4,
+                        borderRadius: '30px',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center'
@@ -49,13 +51,14 @@ const Login = () => {
                     <motion.div
                         animate={{ y: [0, -10, 0] }}
                         transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+                        style={{ zIndex: 9999, position: 'relative' }}
                     >
                         {/* Custom Image Logo */}
-                        <img src="/Logo.png" alt="Journal Logo" style={{ height: '60px', objectFit: 'contain', display: 'block' }} />
+                        <img src={mode === 'dark' ? "/LogoDark.png" : "/LogoLight.png"} alt="AntiGrav" style={{ height: '60px', objectFit: 'contain', display: 'block' }} />
                     </motion.div>
 
                     <Typography variant="h4" sx={{ mt: 2, mb: 1, fontWeight: 'bold', fontFamily: '"Oleo Script", cursive' }}>
-                        AntiGrav Journal
+                        AntiGrav
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
                         Sign in to analyze your trades.
@@ -101,11 +104,28 @@ const Login = () => {
                             sx={{
                                 py: 1.5,
                                 fontWeight: 'bold',
+                                borderRadius: '30px',
                                 boxShadow: '0 8px 16px rgba(33, 150, 243, 0.3)'
                             }}
                         >
                             Sign In
                         </Button>
+
+                        <Box sx={{ textAlign: 'center', mt: 2 }}>
+                            <Typography
+                                component={Link}
+                                to="/forgot-password"
+                                variant="body2"
+                                sx={{
+                                    color: 'primary.main',
+                                    textDecoration: 'none',
+                                    fontWeight: 600,
+                                    '&:hover': { textDecoration: 'underline' }
+                                }}
+                            >
+                                Forgot Password?
+                            </Typography>
+                        </Box>
                     </Box>
                 </Paper>
             </motion.div>
