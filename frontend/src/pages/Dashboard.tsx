@@ -17,7 +17,7 @@ const FloatingCard = ({ children, delay = 0 }: { children: ReactNode, delay?: nu
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay }}
         whileHover={{ scale: 1.01, zIndex: 10, transition: { duration: 0.3, ease: 'easeOut' } }}
-        sx={{ p: 3, borderRadius: 4, position: 'relative', overflow: 'hidden', height: '100%' }}
+        sx={{ p: 3, borderRadius: '30px', position: 'relative', overflow: 'hidden', height: '100%' }}
     >
         {children}
     </MotionPaper>
@@ -117,11 +117,11 @@ const Dashboard = () => {
                     aria-label="broker selector"
                     sx={{
                         backgroundColor: 'background.paper',
-                        borderRadius: '12px',
+                        borderRadius: '30px',
                         p: 0.5,
                         '& .MuiToggleButton-root': {
                             border: 'none',
-                            borderRadius: '8px !important',
+                            borderRadius: '25px !important',
                             px: 4,
                             py: 1,
                             textTransform: 'none',
@@ -162,7 +162,7 @@ const Dashboard = () => {
                                     color: isTotalPositive ? 'success.dark' : 'error.dark',
                                     px: 2,
                                     py: 1,
-                                    borderRadius: 2
+                                    borderRadius: '30px'
                                 }}
                             >
                                 {isTotalPositive ? '+' : ''}${latestTotalPnl.toFixed(2)}
@@ -250,7 +250,7 @@ const Dashboard = () => {
                                                 elevation={hasTrades ? 4 : 1}
                                                 sx={{
                                                     p: 1.5,
-                                                    borderRadius: 2,
+                                                    borderRadius: '15px',
                                                     height: 80,
                                                     backgroundColor: hasTrades
                                                         ? (isPositive ? 'success.main' : 'error.main')
@@ -269,12 +269,17 @@ const Dashboard = () => {
                                                     {format(day, 'MMM d')}
                                                 </Typography>
                                                 {hasTrades && (
-                                                    <Typography
-                                                        variant="body2"
-                                                        sx={{ fontWeight: 'bold', color: 'white' }}
-                                                    >
-                                                        {isPositive ? '+' : '-'}${Math.abs(pnl).toFixed(2)}
-                                                    </Typography>
+                                                    <Box>
+                                                        <Typography
+                                                            variant="body2"
+                                                            sx={{ fontWeight: 'bold', color: 'white' }}
+                                                        >
+                                                            {isPositive ? '+' : '-'}${Math.abs(pnl).toFixed(2)}
+                                                        </Typography>
+                                                        <Typography variant="caption" sx={{ opacity: 0.9, fontSize: '0.7rem', display: 'block' }}>
+                                                            {tradeStats.count} Trades
+                                                        </Typography>
+                                                    </Box>
                                                 )}
                                             </Paper>
 
@@ -292,7 +297,7 @@ const Dashboard = () => {
                                                         backgroundColor: isPositive ? '#4caf50' : '#f44336',
                                                         color: 'white',
                                                         padding: '8px 16px',
-                                                        borderRadius: 20,
+                                                        borderRadius: '30px',
                                                         fontWeight: 'bold',
                                                         whiteSpace: 'nowrap',
                                                         boxShadow: `0 4px 15px ${isPositive ? 'rgba(76,175,80,0.4)' : 'rgba(244,67,54,0.4)'}`,
@@ -324,15 +329,15 @@ const Dashboard = () => {
                             <Typography variant="h5">Quick Stats</Typography>
                         </Box>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            <Paper sx={{ p: 2, borderRadius: 2, bgcolor: 'rgba(33, 150, 243, 0.1)', borderLeft: '4px solid #2196f3' }}>
+                            <Paper sx={{ p: 2, borderRadius: '30px', bgcolor: 'rgba(33, 150, 243, 0.1)', borderLeft: '4px solid #2196f3' }}>
                                 <Typography variant="caption" color="text.secondary">Total Trades</Typography>
                                 <Typography variant="h4" color="primary.main">{quickStats.total}</Typography>
                             </Paper>
-                            <Paper sx={{ p: 2, borderRadius: 2, bgcolor: 'rgba(76, 175, 80, 0.1)', borderLeft: '4px solid #4caf50' }}>
+                            <Paper sx={{ p: 2, borderRadius: '30px', bgcolor: 'rgba(76, 175, 80, 0.1)', borderLeft: '4px solid #4caf50' }}>
                                 <Typography variant="caption" color="text.secondary">Win Rate</Typography>
                                 <Typography variant="h4" color="success.main">{quickStats.winRate}</Typography>
                             </Paper>
-                            <Paper sx={{ p: 2, borderRadius: 2, bgcolor: 'rgba(244, 67, 54, 0.1)', borderLeft: '4px solid #f44336' }}>
+                            <Paper sx={{ p: 2, borderRadius: '30px', bgcolor: 'rgba(244, 67, 54, 0.1)', borderLeft: '4px solid #f44336' }}>
                                 <Typography variant="caption" color="text.secondary">Largest Loss</Typography>
                                 <Typography variant="h4" color="error.main">{quickStats.largestLoss}</Typography>
                             </Paper>

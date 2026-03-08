@@ -68,7 +68,7 @@ const Reports = () => {
                     <Typography variant="body1" color="text.secondary">No trades found. Go to Import to add your data.</Typography>
                 </Paper>
             ) : (
-                <Paper className="glass-effect" sx={{ p: 4, borderRadius: 4 }}>
+                <Paper className="glass-effect" sx={{ p: 4, borderRadius: '30px' }}>
                     {/* Header Row */}
                     <Box sx={{ display: 'flex', px: 2, mb: 2, borderBottom: '1px solid rgba(150,150,150,0.2)', pb: 2 }}>
                         <Typography variant="subtitle2" sx={{ flex: 1, fontWeight: 'bold', color: 'text.secondary' }}>Symbol</Typography>
@@ -91,7 +91,7 @@ const Reports = () => {
                                         display: 'flex',
                                         alignItems: 'center',
                                         p: 2,
-                                        borderRadius: 2,
+                                        borderRadius: '15px',
                                         backdropFilter: 'blur(10px)',
                                         bgcolor: getPnlBg(row.pnl),
                                         borderLeft: `4px solid ${getPnlColor(row.pnl)}`

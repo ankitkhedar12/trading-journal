@@ -219,7 +219,7 @@ const ImportData = () => {
                     {/* Broker Selector */}
                     <Paper
                         className="glass-effect"
-                        sx={{ p: 3, borderRadius: 3, mb: 3 }}
+                        sx={{ p: 3, borderRadius: '30px', mb: 3 }}
                     >
                         <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: 'text.secondary' }}>
                             Select Broker / Firm
@@ -230,15 +230,22 @@ const ImportData = () => {
                             onChange={(_, val) => { if (val) setSelectedBroker(val); }}
                             fullWidth
                             sx={{
+                                gap: 2,
+                                display: 'flex',
+                                flexWrap: 'wrap',
                                 '& .MuiToggleButton-root': {
+                                    flex: 1,
                                     textTransform: 'none',
                                     fontWeight: 600,
                                     fontSize: '0.95rem',
                                     py: 1.5,
-                                    borderRadius: 2,
+                                    borderRadius: '15px !important',
+                                    border: '1px solid !important',
+                                    borderColor: 'divider',
                                     '&.Mui-selected': {
                                         bgcolor: 'primary.main',
                                         color: 'white',
+                                        borderColor: 'primary.main',
                                         '&:hover': { bgcolor: 'primary.dark' },
                                     },
                                 },
@@ -258,7 +265,7 @@ const ImportData = () => {
                         sx={{
                             p: 6,
                             textAlign: 'center',
-                            borderRadius: 4,
+                            borderRadius: '30px',
                             border: isHovered ? '2px dashed #2196f3' : '2px dashed rgba(150, 150, 150, 0.3)',
                             cursor: 'pointer',
                             position: 'relative',
@@ -277,7 +284,7 @@ const ImportData = () => {
                             >
                                 <Box sx={{
                                     bgcolor: 'success.main',
-                                    borderRadius: 2,
+                                    borderRadius: '15px',
                                     p: 3,
                                     display: 'inline-flex',
                                     flexDirection: 'column',

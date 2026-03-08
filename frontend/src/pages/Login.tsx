@@ -42,7 +42,7 @@ const Login = () => {
                     className="glass-effect"
                     sx={{
                         p: 5,
-                        borderRadius: 4,
+                        borderRadius: '30px',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center'
@@ -104,6 +104,7 @@ const Login = () => {
                             sx={{
                                 py: 1.5,
                                 fontWeight: 'bold',
+                                borderRadius: '30px',
                                 boxShadow: '0 8px 16px rgba(33, 150, 243, 0.3)'
                             }}
                         >

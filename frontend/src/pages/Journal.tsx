@@ -15,7 +15,7 @@ const FloatingCard = ({ children, delay = 0, sx = {} }: { children: React.ReactN
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay }}
         whileHover={{ scale: 1.01, zIndex: 10, transition: { duration: 0.3, ease: 'easeOut' } }}
-        sx={{ p: 4, borderRadius: 4, position: 'relative', overflow: 'hidden', ...sx }}
+        sx={{ p: 4, borderRadius: '30px', position: 'relative', overflow: 'hidden', ...sx }}
     >
         {children}
     </MotionPaper>
@@ -132,7 +132,7 @@ const Journal = () => {
                             onClick={handleSave}
                             endIcon={isSaving ? <CircularProgress size={20} color="inherit" /> : <Send />}
                             size="large"
-                            sx={{ borderRadius: 8, px: 4, py: 1.5, fontWeight: 'bold' }}
+                            sx={{ borderRadius: '30px', px: 4, py: 1.5, fontWeight: 'bold' }}
                         >
                             {isSaving ? 'Saving...' : 'Save Entry'}
                         </Button>
@@ -147,7 +147,7 @@ const Journal = () => {
                     <CircularProgress />
                 </Box>
             ) : entries.length === 0 ? (
-                <Paper className="glass-effect" sx={{ p: 4, textAlign: 'center', borderRadius: 4 }}>
+                <Paper className="glass-effect" sx={{ p: 4, textAlign: 'center', borderRadius: '30px' }}>
                     <Typography color="text.secondary">No journal entries found. Write your first reflection above!</Typography>
                 </Paper>
             ) : (

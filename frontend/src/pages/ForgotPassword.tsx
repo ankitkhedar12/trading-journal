@@ -151,7 +151,7 @@ const ForgotPassword = () => {
                     className="glass-effect"
                     sx={{
                         p: 5,
-                        borderRadius: 4,
+                        borderRadius: '30px',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
@@ -210,7 +210,7 @@ const ForgotPassword = () => {
                                         variant="contained"
                                         size="large"
                                         disabled={isLoading}
-                                        sx={{ py: 1.5, fontWeight: 'bold', borderRadius: 3, boxShadow: '0 8px 16px rgba(33, 150, 243, 0.3)' }}
+                                        sx={{ py: 1.5, fontWeight: 'bold', borderRadius: '30px', boxShadow: '0 8px 16px rgba(33, 150, 243, 0.3)' }}
                                     >
                                         {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Send Reset Code'}
                                     </Button>
@@ -278,7 +278,7 @@ const ForgotPassword = () => {
                                         variant="contained"
                                         size="large"
                                         disabled={isLoading || otp.length !== 6}
-                                        sx={{ py: 1.5, fontWeight: 'bold', borderRadius: 3, boxShadow: '0 8px 16px rgba(33, 150, 243, 0.3)' }}
+                                        sx={{ py: 1.5, fontWeight: 'bold', borderRadius: '30px', boxShadow: '0 8px 16px rgba(33, 150, 243, 0.3)' }}
                                     >
                                         {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Verify Code'}
                                     </Button>
@@ -350,7 +350,7 @@ const ForgotPassword = () => {
                                         variant="contained"
                                         size="large"
                                         disabled={isLoading || !passwordsMatch || newPassword.length < 6}
-                                        sx={{ py: 1.5, fontWeight: 'bold', borderRadius: 3, boxShadow: '0 8px 16px rgba(33, 150, 243, 0.3)' }}
+                                        sx={{ py: 1.5, fontWeight: 'bold', borderRadius: '30px', boxShadow: '0 8px 16px rgba(33, 150, 243, 0.3)' }}
                                     >
                                         {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Reset Password'}
                                     </Button>
@@ -387,7 +387,7 @@ const ForgotPassword = () => {
                                     variant="contained"
                                     size="large"
                                     onClick={() => navigate('/login')}
-                                    sx={{ py: 1.5, fontWeight: 'bold', borderRadius: 3, boxShadow: '0 8px 16px rgba(33, 150, 243, 0.3)' }}
+                                    sx={{ py: 1.5, fontWeight: 'bold', borderRadius: '30px', boxShadow: '0 8px 16px rgba(33, 150, 243, 0.3)' }}
                                 >
                                     Go to Login
                                 </Button>

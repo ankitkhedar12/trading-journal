@@ -102,11 +102,18 @@ body {
   position: absolute;
   inset: 0;
   z-index: 0;
-  backdrop-filter: blur(0px);
-  -webkit-backdrop-filter: blur(0px);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
   filter: url(#lg-dist);
+  -webkit-filter: url(#lg-dist);
   isolation: isolate;
   pointer-events: none;
+  transform: translateZ(0);
+}
+
+[data-glass='clear'] .lg-filter {
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
 }
 
 .lg-overlay {

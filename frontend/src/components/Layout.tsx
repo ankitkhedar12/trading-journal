@@ -43,9 +43,9 @@ const Layout = () => {
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
             {/* Liquid Mirror SVG Filter (Smooth Lens using radial bump map instead of noise, matching Apple Liquid Glass) */}
-            <svg style={{ display: 'none' }}>
+            <svg style={{ position: 'absolute', width: 0, height: 0, pointerEvents: 'none' }}>
                 <filter id="lg-dist" x="0%" y="0%" width="100%" height="100%">
-                    <feImage href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='256' height='256'><defs><radialGradient id='g' cx='50%' cy='50%' r='50%'><stop offset='0%' stop-color='%237F7F7F'/><stop offset='90%' stop-color='%235A5A5A'/><stop offset='100%' stop-color='%237F7F7F'/></radialGradient></defs><rect width='100%' height='100%' fill='url(%23g)'/></svg>" result="lensMap" preserveAspectRatio="none" />
+                    <feImage href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%237F7F7F'/%3E%3Cstop offset='90%25' stop-color='%235A5A5A'/%3E%3Cstop offset='100%25' stop-color='%237F7F7F'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23g)'/%3E%3C/svg%3E" xlinkHref="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%237F7F7F'/%3E%3Cstop offset='90%25' stop-color='%235A5A5A'/%3E%3Cstop offset='100%25' stop-color='%237F7F7F'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23g)'/%3E%3C/svg%3E" result="lensMap" preserveAspectRatio="none" />
                     <feDisplacementMap in="SourceGraphic" in2="lensMap" scale="50" xChannelSelector="R" yChannelSelector="R" />
                 </filter>
             </svg>
@@ -79,7 +79,7 @@ const Layout = () => {
                     transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                     open={Boolean(anchorEl)}
                     onClose={handleClose}
-                    slotProps={{ paper: { sx: { mt: 1, minWidth: 200, borderRadius: 3, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' } } }}
+                    slotProps={{ paper: { sx: { mt: 1, minWidth: 200, borderRadius: '30px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' } } }}
                 >
                     <MenuItem disabled sx={{ opacity: '1 !important', borderBottom: '1px solid', borderColor: 'divider', mb: 1 }}>
                         <Typography variant="body2" color="text.secondary">{user?.email}</Typography>
