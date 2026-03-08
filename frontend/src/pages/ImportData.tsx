@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Box, Typography, Paper, CircularProgress } from '@mui/material';
+import { Box, Typography, Paper, CircularProgress, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { motion, useAnimation } from 'framer-motion';
 import { PostAdd } from '@mui/icons-material';
 import Papa from 'papaparse';
@@ -7,15 +7,104 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getBaseUrl } from '../utils/config';
 
+type BrokerType = 'vantage' | 'the_funded_room';
 
+const BROKER_LABELS: Record<BrokerType, string> = {
+    vantage: 'Vantage',
+    the_funded_room: 'The Funded Room',
+};
 
 const ImportData = () => {
     const [isHovered, setIsHovered] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [selectedBroker, setSelectedBroker] = useState<BrokerType>('vantage');
     const dropControls = useAnimation();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { user } = useAuth();
     const navigate = useNavigate();
+
+    const parseVantageTrades = (rawData: any[]) => {
+        return rawData.map((row: any) => {
+            if (!row || typeof row !== 'object') return null;
+
+            const get = (key: string) => {
+                const target = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const foundKey = Object.keys(row).find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === target);
+                return foundKey ? String(row[foundKey]) : '';
+            };
+
+            return {
+                symbol: get('Symbol').replace(/[\r\n\s]+/g, ''),
+                volume: get('ClosedTotalVolLots') || get('Volume') || get('Vol'),
+                entryPrice: parseFloat(get('EntryPrice').replace(/,/g, '') || '0'),
+                closePrice: parseFloat(get('AvgPrice') || get('ClosePrice') || '0'.replace(/,/g, '')),
+                pnl: parseFloat(get('PnL') || get('Profit') || '0'.replace(/,/g, '')),
+                netPnl: parseFloat(get('NetPnL') || get('PnL') || '0'.replace(/,/g, '')),
+                chargesSwap: get('ChargesSwap') || get('Swap') || '0.00',
+                openedAt: get('Opened') || get('OpenTime') || get('Time'),
+                closedAt: get('Closed') || get('CloseTime') || get('Time'),
+                orderId: get('Order') || get('Ticket') || get('Position'),
+                status: get('Status') || 'Closed'
+            };
+        }).filter(t => t && t.orderId && t.openedAt);
+    };
+
+    const parseFundedRoomTrades = (rawData: any[]) => {
+        return rawData.map((row: any) => {
+            if (!row || typeof row !== 'object') return null;
+
+            const get = (key: string) => {
+                const target = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const foundKey = Object.keys(row).find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === target);
+                return foundKey ? String(row[foundKey]).trim() : '';
+            };
+
+            const closedRaw = get('CLOSED') || get('CLOSED↓');
+            const pair = get('PAIR').replace(/\//g, '');
+            const lotSize = get('LOTSIZE') || get('LOT SIZE');
+            const entryPrice = get('ENTRYPRICE') || get('ENTRY PRICE');
+            const exitPrice = get('EXITPRICE') || get('EXIT PRICE');
+            const totalFees = get('TOTALFEES') || get('TOTAL FEES');
+            const grossPnl = get('GROSSPL') || get('GROSS P&L') || get('GROSSP&L');
+            const netPnl = get('NETPL') || get('NET P&L') || get('NETP&L');
+
+            if (!closedRaw || !pair) return null;
+
+            // Handle TFR date format: "03/07/2026, 03:25:09 AM GMT+5:30"
+            // We need to parse this into a valid JavaScript Date object so backend doesn't crash.
+            let isoDate = null;
+            try {
+                // Remove the "GMT" part since Date.parse handles standard offsets better without it sometimes, 
+                // or we can format it properly. Example: "03/07/2026 03:25:09 AM +05:30"
+                const cleanDateStr = closedRaw.replace(/GMT/g, '').replace(/,/g, '');
+                const d = new Date(cleanDateStr);
+                if (!isNaN(d.getTime())) {
+                    isoDate = d.toISOString();
+                }
+            } catch (e) {
+                console.warn("Could not parse date:", closedRaw);
+            }
+
+            if (!isoDate) return null;
+
+            // Generate a unique orderId from the closed timestamp + pair
+            const orderId = `TFR_${pair}_${isoDate.replace(/[-:T.Z]/g, '')}`;
+
+            return {
+                symbol: pair,
+                volume: lotSize,
+                entryPrice: parseFloat(entryPrice.replace(/[$,]/g, '') || '0'),
+                closePrice: parseFloat(exitPrice.replace(/[$,]/g, '') || '0'),
+                pnl: parseFloat(grossPnl.replace(/[$,]/g, '') || '0'),
+                netPnl: parseFloat(netPnl.replace(/[$,]/g, '') || '0'),
+                chargesSwap: totalFees.replace(/[$]/g, '') || '0.00',
+                openedAt: isoDate, // TFR only gives closed time, use it for both
+                closedAt: isoDate,
+                orderId,
+                status: 'Closed'
+            };
+        }).filter(t => t && t.orderId && t.openedAt);
+    };
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -60,30 +149,10 @@ const ImportData = () => {
                                     return;
                                 }
 
-                                const formattedTrades = rawData.map((row: any) => {
-                                    if (!row || typeof row !== 'object') return null;
-
-                                    // Fuzzy match to fix trailing whitespace or invisible chars in headers
-                                    const get = (key: string) => {
-                                        const target = key.toLowerCase().replace(/[^a-z0-9]/g, '');
-                                        const foundKey = Object.keys(row).find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === target);
-                                        return foundKey ? String(row[foundKey]) : '';
-                                    };
-
-                                    return {
-                                        symbol: get('Symbol').replace(/[\r\n\s]+/g, ''),
-                                        volume: get('ClosedTotalVolLots') || get('Volume') || get('Vol'),
-                                        entryPrice: parseFloat(get('EntryPrice').replace(/,/g, '') || '0'),
-                                        closePrice: parseFloat(get('AvgPrice') || get('ClosePrice') || '0'.replace(/,/g, '')),
-                                        pnl: parseFloat(get('PnL') || get('Profit') || '0'.replace(/,/g, '')),
-                                        netPnl: parseFloat(get('NetPnL') || get('PnL') || '0'.replace(/,/g, '')),
-                                        chargesSwap: get('ChargesSwap') || get('Swap') || '0.00',
-                                        openedAt: get('Opened') || get('OpenTime') || get('Time'),
-                                        closedAt: get('Closed') || get('CloseTime') || get('Time'),
-                                        orderId: get('Order') || get('Ticket') || get('Position'),
-                                        status: get('Status') || 'Closed'
-                                    };
-                                }).filter(t => t && t.orderId && t.openedAt);
+                                // Parse based on selected broker
+                                const formattedTrades = selectedBroker === 'vantage'
+                                    ? parseVantageTrades(rawData)
+                                    : parseFundedRoomTrades(rawData);
 
                                 console.log("Extracted Trades to send:", formattedTrades.length);
 
@@ -99,7 +168,10 @@ const ImportData = () => {
                                         'Content-Type': 'application/json',
                                         'Authorization': `Bearer ${user?.token}`
                                     },
-                                    body: JSON.stringify(formattedTrades)
+                                    body: JSON.stringify({
+                                        trades: formattedTrades,
+                                        broker: selectedBroker,
+                                    })
                                 });
 
                                 if (res.ok) {
@@ -144,6 +216,43 @@ const ImportData = () => {
                 >
                     <Typography variant="h4" sx={{ mb: 4, fontWeight: 'bold' }}>Import Data</Typography>
 
+                    {/* Broker Selector */}
+                    <Paper
+                        className="glass-effect"
+                        sx={{ p: 3, borderRadius: 3, mb: 3 }}
+                    >
+                        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: 'text.secondary' }}>
+                            Select Broker / Firm
+                        </Typography>
+                        <ToggleButtonGroup
+                            value={selectedBroker}
+                            exclusive
+                            onChange={(_, val) => { if (val) setSelectedBroker(val); }}
+                            fullWidth
+                            sx={{
+                                '& .MuiToggleButton-root': {
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    fontSize: '0.95rem',
+                                    py: 1.5,
+                                    borderRadius: 2,
+                                    '&.Mui-selected': {
+                                        bgcolor: 'primary.main',
+                                        color: 'white',
+                                        '&:hover': { bgcolor: 'primary.dark' },
+                                    },
+                                },
+                            }}
+                        >
+                            {(Object.keys(BROKER_LABELS) as BrokerType[]).map(key => (
+                                <ToggleButton key={key} value={key}>
+                                    {BROKER_LABELS[key]}
+                                </ToggleButton>
+                            ))}
+                        </ToggleButtonGroup>
+                    </Paper>
+
+                    {/* Drop Zone */}
                     <Paper
                         className="glass-effect"
                         sx={{
@@ -186,10 +295,10 @@ const ImportData = () => {
                         )}
 
                         <Typography variant="h6" color="text.primary">
-                            Click to select CSV file and import trades
+                            Click to select {BROKER_LABELS[selectedBroker]} CSV file
                         </Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                            Matches standard export format
+                            Matches {BROKER_LABELS[selectedBroker]} export format
                         </Typography>
 
                         <input

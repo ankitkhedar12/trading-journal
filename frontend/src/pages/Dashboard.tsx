@@ -1,4 +1,4 @@
-import { Box, Typography, Paper, CircularProgress, IconButton } from '@mui/material';
+import { Box, Typography, Paper, CircularProgress, IconButton, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { motion } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, subMonths, addMonths } from 'date-fns';
@@ -48,32 +48,34 @@ const Dashboard = () => {
     const [stats, setStats] = useState<any>(null);
     const [trades, setTrades] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedBroker, setSelectedBroker] = useState<string>('vantage');
+
+    const fetchDashboardData = async () => {
+        setIsLoading(true);
+        try {
+            const brokerParam = selectedBroker ? `?broker=${selectedBroker}` : '';
+            const resStats = await fetch(`${getBaseUrl()}/api/trades/dashboard${brokerParam}`, {
+                headers: { 'Authorization': `Bearer ${user?.token}` }
+            });
+            const dataStats = await resStats.json();
+            setStats(dataStats);
+
+            const resTrades = await fetch(`${getBaseUrl()}/api/trades${brokerParam}`, {
+                headers: { 'Authorization': `Bearer ${user?.token}` }
+            });
+            const dataTrades = await resTrades.json();
+            setTrades(dataTrades);
+
+        } catch (error) {
+            console.error("Failed to load dashboard data:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchDashboardData = async () => {
-            try {
-                const resStats = await fetch(`${getBaseUrl()}/api/trades/dashboard`, {
-                    headers: { 'Authorization': `Bearer ${user?.token}` }
-                });
-                const dataStats = await resStats.json();
-                setStats(dataStats);
-
-                // Also fetch trades to build out the correct calendar
-                const resTrades = await fetch(`${getBaseUrl()}/api/trades`, {
-                    headers: { 'Authorization': `Bearer ${user?.token}` }
-                });
-                const dataTrades = await resTrades.json();
-                setTrades(dataTrades);
-
-            } catch (error) {
-                console.error("Failed to load dashboard data:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
         if (user) fetchDashboardData();
-    }, [user]);
+    }, [user, selectedBroker]);
 
     if (isLoading) {
         return (
@@ -106,6 +108,40 @@ const Dashboard = () => {
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {/* Broker Selector */}
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                <ToggleButtonGroup
+                    value={selectedBroker}
+                    exclusive
+                    onChange={(_, val) => val && setSelectedBroker(val)}
+                    aria-label="broker selector"
+                    sx={{
+                        backgroundColor: 'background.paper',
+                        borderRadius: '12px',
+                        p: 0.5,
+                        '& .MuiToggleButton-root': {
+                            border: 'none',
+                            borderRadius: '8px !important',
+                            px: 4,
+                            py: 1,
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            color: 'text.secondary',
+                            '&.Mui-selected': {
+                                bgcolor: 'primary.main',
+                                color: 'white',
+                                '&:hover': {
+                                    bgcolor: 'primary.dark',
+                                }
+                            }
+                        }
+                    }}
+                >
+                    <ToggleButton value="vantage">Vantage</ToggleButton>
+                    <ToggleButton value="the_funded_room">The Funded Room</ToggleButton>
+                </ToggleButtonGroup>
+            </Box>
+
             <Box sx={{ width: '100%' }}>
                 <FloatingCard delay={0.1}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
@@ -147,6 +183,7 @@ const Dashboard = () => {
                                     <Tooltip
                                         contentStyle={{ borderRadius: 12, border: 'none', background: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(5px)', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}
                                         itemStyle={{ color: '#2196f3', fontWeight: 'bold' }}
+                                        labelStyle={{ color: '#333' }}
                                     />
                                     <Line
                                         type="monotone"

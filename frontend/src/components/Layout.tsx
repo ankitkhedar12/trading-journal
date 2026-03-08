@@ -9,6 +9,7 @@ import {
     AutoStories as JournalIcon,
     BarChart as ReportsIcon,
     Settings as SettingsIcon,
+    AutoGraph as AutoGraphIcon,
     Logout
 } from '@mui/icons-material';
 import { useThemeContext } from '../context/ThemeContext';
@@ -50,8 +51,8 @@ const Layout = () => {
             </svg>
 
             {/* Top Left Logo */}
-            <Box component={NavLink} to="/" sx={{ position: 'absolute', top: 24, left: 24, zIndex: 1000 }}>
-                <img src="/Logo.png" alt="Journal Logo" style={{ height: '40px', objectFit: 'contain' }} />
+            <Box component={NavLink} to="/" sx={{ position: 'absolute', top: 24, left: 24, zIndex: 9999 }}>
+                <img src={mode === 'dark' ? "/LogoDark.png" : "/LogoLight.png"} alt="AntiGrav" style={{ height: '60px', objectFit: 'contain' }} />
             </Box>
 
             {/* Top Right Controls */}
@@ -135,6 +136,7 @@ const Layout = () => {
                         {/* Dynamic Render for Dock Items */}
                         {[
                             { path: '/dashboard', icon: <DashboardIcon />, label: 'Dashboard' },
+                            { path: '/funded', icon: <AutoGraphIcon />, label: 'Funded' },
                             { path: '/journal', icon: <JournalIcon />, label: 'Journal' },
                             { path: '/reports', icon: <ReportsIcon />, label: 'Reports' },
                             { path: '/import', icon: <FileUploadIcon />, label: 'Import' },

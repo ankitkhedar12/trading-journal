@@ -1,6 +1,6 @@
-# Day Trading Journal - Development Plan
+# AntiGrav - Development Plan
 
-This document outlines the step-by-step plan for building the Day Trading Journal application with a modern, "anti-gravity" Material Design aesthetic, responsive layout, and dark/light mode support.
+This document outlines the step-by-step plan for building the AntiGrav application with a modern, "anti-gravity" Material Design aesthetic, responsive layout, and dark/light mode support.
 
 ## Phase 1: Project Setup and Initial Scaffolding
 

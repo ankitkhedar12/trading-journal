@@ -1,8 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
+import PropDashboard from './pages/PropDashboard';
 import ImportData from './pages/ImportData';
 import Login from './pages/Login';
+import ForgotPassword from './pages/ForgotPassword';
 import Journal from './pages/Journal';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
@@ -13,11 +15,13 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
         <Route path="/" element={<ProtectedRoute />}>
           <Route element={<Layout />}>
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="funded" element={<PropDashboard />} />
             <Route path="journal" element={<Journal />} />
             <Route path="reports" element={<Reports />} />
             <Route path="settings" element={<Settings />} />

@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, Request, Query } from '@nestjs/common';
 import { TradesService } from './trades.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -8,17 +8,18 @@ export class TradesController {
     constructor(private readonly tradesService: TradesService) { }
 
     @Post('import')
-    import(@Body() body: any[]) {
-        return this.tradesService.importTrades(body);
+    import(@Request() req: any, @Body() body: { trades: any[]; broker: string }) {
+        return this.tradesService.importTrades(body.trades, req.user.id, body.broker || 'vantage');
     }
 
     @Get('dashboard')
-    getDashboardStats() {
-        return this.tradesService.getDashboardStats();
+    getDashboardStats(@Request() req: any, @Query('broker') broker?: string) {
+        return this.tradesService.getDashboardStats(req.user.id, broker);
     }
 
     @Get()
-    getTrades() {
-        return this.tradesService.getTrades();
+    getTrades(@Request() req: any, @Query('broker') broker?: string) {
+        return this.tradesService.getTrades(req.user.id, broker);
     }
 }
+
