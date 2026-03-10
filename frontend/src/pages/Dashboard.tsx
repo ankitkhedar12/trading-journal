@@ -3,10 +3,9 @@ import { motion } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, subMonths, addMonths } from 'date-fns';
 import { ShowChart, CalendarMonth, ChevronLeft, ChevronRight } from '@mui/icons-material';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { getBaseUrl } from '../utils/config';
+import { useDashboardStats, useTrades } from '../hooks/useTradeQueries';
 
 const MotionPaper = motion(Paper);
 
@@ -42,40 +41,14 @@ const CustomDot = (props: any) => {
 };
 
 const Dashboard = () => {
-    const { user } = useAuth();
     const [hoveredDay, setHoveredDay] = useState<Date | null>(null);
     const [currentDate, setCurrentDate] = useState<Date>(new Date());
-    const [stats, setStats] = useState<any>(null);
-    const [trades, setTrades] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
     const [selectedBroker, setSelectedBroker] = useState<string>('vantage');
 
-    const fetchDashboardData = async () => {
-        setIsLoading(true);
-        try {
-            const brokerParam = selectedBroker ? `?broker=${selectedBroker}` : '';
-            const resStats = await fetch(`${getBaseUrl()}/api/trades/dashboard${brokerParam}`, {
-                headers: { 'Authorization': `Bearer ${user?.token}` }
-            });
-            const dataStats = await resStats.json();
-            setStats(dataStats);
+    const { data: stats, isLoading: isLoadingStats } = useDashboardStats(selectedBroker);
+    const { data: trades = [], isLoading: isLoadingTrades } = useTrades(selectedBroker);
 
-            const resTrades = await fetch(`${getBaseUrl()}/api/trades${brokerParam}`, {
-                headers: { 'Authorization': `Bearer ${user?.token}` }
-            });
-            const dataTrades = await resTrades.json();
-            setTrades(dataTrades);
-
-        } catch (error) {
-            console.error("Failed to load dashboard data:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (user) fetchDashboardData();
-    }, [user, selectedBroker]);
+    const isLoading = isLoadingStats || isLoadingTrades;
 
     if (isLoading) {
         return (
@@ -91,7 +64,7 @@ const Dashboard = () => {
     // Group current calendar trades by Date string for mapping
     const calendarMap: { [key: string]: { pnl: number, count: number } } = {};
     if (trades && trades.length > 0) {
-        trades.forEach(t => {
+        trades.forEach((t: any) => {
             const dateStr = format(new Date(t.openedAt), 'yyyy-MM-dd');
             if (!calendarMap[dateStr]) calendarMap[dateStr] = { pnl: 0, count: 0 };
             calendarMap[dateStr].pnl += t.pnl;

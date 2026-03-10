@@ -1,8 +1,6 @@
-import { useState, useEffect } from 'react';
 import { Box, Typography, Paper, CircularProgress } from '@mui/material';
 import { motion } from 'framer-motion';
-import { useAuth } from '../context/AuthContext';
-import { getBaseUrl } from '../utils/config';
+import { useAllTrades } from '../hooks/useTradeQueries';
 
 interface TradeData {
     id: string;
@@ -17,31 +15,7 @@ interface TradeData {
 }
 
 const Reports = () => {
-    const { user } = useAuth();
-    const [trades, setTrades] = useState<TradeData[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchTrades = async () => {
-            try {
-                const response = await fetch(`${getBaseUrl()}/api/trades`, {
-                    headers: {
-                        'Authorization': `Bearer ${user?.token}`
-                    }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    setTrades(data);
-                }
-            } catch (error) {
-                console.error('Failed to fetch trades:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchTrades();
-    }, [user]);
+    const { data: trades = [], isLoading } = useAllTrades<TradeData>();
 
     const getPnlColor = (pnl: number) => {
         return pnl > 0 ? '#4caf50' : pnl < 0 ? '#f44336' : '#9e9e9e';

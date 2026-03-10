@@ -4,6 +4,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tool
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getBaseUrl } from '../utils/config';
+import { usePropDashboard, useInvalidateTrades } from '../hooks/useTradeQueries';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, subMonths, addMonths } from 'date-fns';
 import { CalendarMonth, Add, Warning, ShowChart, Security, Gavel, ChevronLeft, ChevronRight } from '@mui/icons-material';
 
@@ -25,8 +26,7 @@ const FloatingCard = ({ children, delay = 0, sx = {} }: { children: React.ReactN
 const PropDashboard = () => {
     const { user } = useAuth();
     const theme = useTheme();
-    const [isLoading, setIsLoading] = useState(true);
-    const [dashboardData, setDashboardData] = useState<any>(null);
+    const invalidateTrades = useInvalidateTrades();
     const [openSetup, setOpenSetup] = useState(false);
     const [openEdit, setOpenEdit] = useState(false);
     const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -37,6 +37,18 @@ const PropDashboard = () => {
     const [accountSize, setAccountSize] = useState(100000);
     const [status, setStatus] = useState('PHASE_1');
 
+    const { data: dashboardData = null, isLoading } = usePropDashboard();
+
+    // Pre-fill form when data loads
+    useEffect(() => {
+        if (dashboardData?.account) {
+            setFirmName(dashboardData.account.firmName);
+            setAccountType(dashboardData.account.accountType);
+            setAccountSize(dashboardData.account.accountSize);
+            setStatus(dashboardData.account.status);
+        }
+    }, [dashboardData?.account]);
+
     useEffect(() => {
         if (!dashboardData?.account) {
             const defaultStatus = accountType === 'INSTANT' ? 'FUNDED' : 'PHASE_1';
@@ -46,36 +58,7 @@ const PropDashboard = () => {
         }
     }, [accountType, dashboardData?.account]);
 
-    const fetchData = async () => {
-        setIsLoading(true);
-        try {
-            const res = await fetch(`${getBaseUrl()}/api/prop-account/dashboard`, {
-                headers: { 'Authorization': `Bearer ${user?.token}` }
-            });
-            const data = await res.json();
-            if (res.ok && data) {
-                setDashboardData(data);
-                // Pre-fill edit form
-                if (data.account) {
-                    setFirmName(data.account.firmName);
-                    setAccountType(data.account.accountType);
-                    setAccountSize(data.account.accountSize);
-                    setStatus(data.account.status);
-                }
-            } else {
-                setDashboardData(null);
-            }
-        } catch (error) {
-            console.error("Failed to load prop dashboard data:", error);
-            setDashboardData(null);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (user) fetchData();
-    }, [user]);
+    const invalidatePropData = () => invalidateTrades();
 
     const handleCreateAccount = async () => {
         try {
@@ -85,7 +68,7 @@ const PropDashboard = () => {
                 body: JSON.stringify({ firmName, accountType, accountSize: Number(accountSize), status })
             });
             setOpenSetup(false);
-            fetchData();
+            invalidatePropData();
         } catch (e) {
             console.error(e);
         }
@@ -100,7 +83,7 @@ const PropDashboard = () => {
             });
             if (res.ok) {
                 setOpenEdit(false);
-                fetchData();
+                invalidatePropData();
             }
         } catch (e) {
             console.error(e);
@@ -114,7 +97,7 @@ const PropDashboard = () => {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${user?.token}` }
             });
-            setDashboardData(null);
+            invalidatePropData();
         } catch (e) {
             console.error(e);
         }

@@ -6,6 +6,7 @@ import Papa from 'papaparse';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getBaseUrl } from '../utils/config';
+import { useInvalidateTrades } from '../hooks/useTradeQueries';
 
 type BrokerType = 'vantage' | 'the_funded_room';
 
@@ -22,6 +23,7 @@ const ImportData = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { user } = useAuth();
     const navigate = useNavigate();
+    const invalidateTrades = useInvalidateTrades();
 
     const parseVantageTrades = (rawData: any[]) => {
         return rawData.map((row: any) => {
@@ -175,6 +177,8 @@ const ImportData = () => {
                                 });
 
                                 if (res.ok) {
+                                    // Invalidate all trade-related caches so pages show fresh data
+                                    invalidateTrades();
                                     navigate('/reports');
                                 } else {
                                     console.error('API call failed:', res.statusText);
