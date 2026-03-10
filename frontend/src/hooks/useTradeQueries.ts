@@ -1,9 +1,14 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { getBaseUrl } from '../utils/config';
+import type { Trade, DashboardStats, PropDashboardData } from '../types/trade';
+
+// Re-export types so consumers can import from one place
+export type { Trade, DashboardStats, PropDashboardData } from '../types/trade';
 
 // ─── Single generic hook that powers every API call ───
-function useApi<T = any>(key: readonly unknown[], endpoint: string, options?: { enabled?: boolean; fallback?: T }) {
+
+function useApi<T>(key: readonly unknown[], endpoint: string, options?: { enabled?: boolean; fallback?: T }) {
     const { user } = useAuth();
     return useQuery<T>({
         queryKey: key,
@@ -18,20 +23,22 @@ function useApi<T = any>(key: readonly unknown[], endpoint: string, options?: { 
     });
 }
 
-// ─── Thin wrappers: just a key + endpoint ───
+// ─── Typed hooks ───
+
 export const useDashboardStats = (broker: string) =>
-    useApi(['dashboardStats', broker], `/api/trades/dashboard?broker=${broker}`);
+    useApi<DashboardStats>(['dashboardStats', broker], `/api/trades/dashboard?broker=${broker}`);
 
 export const useTrades = (broker: string) =>
-    useApi(['trades', broker], `/api/trades?broker=${broker}`);
+    useApi<Trade[]>(['trades', broker], `/api/trades?broker=${broker}`);
 
-export const useAllTrades = <T = any>() =>
-    useApi<T[]>(['allTrades'], '/api/trades', { fallback: [] as unknown as T[] });
+export const useAllTrades = () =>
+    useApi<Trade[]>(['allTrades'], '/api/trades', { fallback: [] });
 
 export const usePropDashboard = () =>
-    useApi(['propDashboard'], '/api/prop-account/dashboard', { fallback: null });
+    useApi<PropDashboardData | null>(['propDashboard'], '/api/prop-account/dashboard', { fallback: null });
 
 // ─── Cache invalidation helper ───
+
 export const useInvalidateTrades = () => {
     const qc = useQueryClient();
     return () => {

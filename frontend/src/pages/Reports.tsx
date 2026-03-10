@@ -2,20 +2,8 @@ import { Box, Typography, Paper, CircularProgress } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useAllTrades } from '../hooks/useTradeQueries';
 
-interface TradeData {
-    id: string;
-    symbol: string;
-    volume: string;
-    entryPrice: number;
-    closePrice: number;
-    pnl: number;
-    openedAt: string;
-    orderId: string;
-    status: string;
-}
-
 const Reports = () => {
-    const { data: trades = [], isLoading } = useAllTrades<TradeData>();
+    const { data: trades = [], isLoading } = useAllTrades();
 
     const getPnlColor = (pnl: number) => {
         return pnl > 0 ? '#4caf50' : pnl < 0 ? '#f44336' : '#9e9e9e';
