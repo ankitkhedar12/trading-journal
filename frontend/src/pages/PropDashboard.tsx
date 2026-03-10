@@ -76,7 +76,7 @@ const PropDashboard = () => {
 
     const handleUpdateAccount = async () => {
         try {
-            const res = await fetch(`${getBaseUrl()}/api/prop-account/${dashboardData.account.id}`, {
+            const res = await fetch(`${getBaseUrl()}/api/prop-account/${dashboardData!.account.id}`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${user?.token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ firmName, accountType, accountSize: Number(accountSize), status })
@@ -93,7 +93,7 @@ const PropDashboard = () => {
     const handleDeleteAccount = async () => {
         if (!window.confirm("Are you sure you want to delete this account? This will remove all tracking for this prop firm.")) return;
         try {
-            await fetch(`${getBaseUrl()}/api/prop-account/${dashboardData.account.id}`, {
+            await fetch(`${getBaseUrl()}/api/prop-account/${dashboardData!.account.id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${user?.token}` }
             });
@@ -265,15 +265,15 @@ const PropDashboard = () => {
                             {renderProgressBar("Max Total Drawdown", rules.maxDrawdown.current, rules.maxDrawdown.limit, false)}
                             {rules.profitTarget?.isActive && renderProgressBar("Profit Target", rules.profitTarget.current, rules.profitTarget.limit, true)}
                             {rules.minDays?.limit > 0 && renderProgressBar("Min Trading Days", rules.minDays.current, rules.minDays.limit, true, false)}
-                            {rules.maxRisk?.isActive && renderProgressBar("Max 3% Aggregated Risk", rules.maxRisk.currentPct, 100, false, false)}
+                            {rules.maxRisk?.isActive && renderProgressBar("Max 3% Aggregated Risk", rules.maxRisk.currentPct ?? 0, 100, false, false)}
 
                             {rules.consistency?.isActive && (
                                 <Box sx={{ mt: 2, p: 2, bgcolor: 'rgba(156, 39, 176, 0.05)', borderRadius: '30px', border: '1px solid rgba(156, 39, 176, 0.2)' }}>
                                     <Typography variant="caption" color="secondary.main" display="flex" alignItems="center" fontWeight="bold">
                                         <Warning sx={{ fontSize: 16, mr: 0.5 }} /> Consistency Rule (15%)
                                     </Typography>
-                                    <Typography variant="body1" sx={{ mt: 1, fontWeight: 'bold', color: rules.consistency.currentPct > 15 ? 'error.main' : 'text.primary' }}>
-                                        Best Day: {rules.consistency.currentPct.toFixed(1)}% of TP
+                                    <Typography variant="body1" sx={{ mt: 1, fontWeight: 'bold', color: (rules.consistency.currentPct ?? 0) > 15 ? 'error.main' : 'text.primary' }}>
+                                        Best Day: {(rules.consistency.currentPct ?? 0).toFixed(1)}% of TP
                                     </Typography>
                                 </Box>
                             )}
