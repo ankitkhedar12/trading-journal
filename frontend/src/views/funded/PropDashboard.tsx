@@ -1,4 +1,4 @@
-import { Box, Typography, Paper, CircularProgress, Button, Grid, TextField, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions, Chip, IconButton, useTheme, Alert } from '@mui/material';
+import { Box, Typography, Paper, CircularProgress, Button, Grid, Chip, IconButton, useTheme, Alert } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip as RechartsTooltip, ReferenceLine } from 'recharts';
 import { useState, useEffect } from 'react';
@@ -9,6 +9,10 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, subMonths, addMont
 import { CalendarMonth, Add, Warning, ShowChart, Security, Gavel, ChevronLeft, ChevronRight } from '@mui/icons-material';
 import { getSecureHeaders } from '../../utils/security';
 
+import FloatingCard from './components/FloatingCard';
+import SetupAccountDialog from './components/SetupAccountDialog';
+import EditAccountDialog from './components/EditAccountDialog';
+
 interface ProfitCalendarEntry {
     date: string;
     pnl: number;
@@ -16,26 +20,6 @@ interface ProfitCalendarEntry {
 }
 
 const MotionPaper = motion(Paper);
-
-const FloatingCard = ({ children, delay = 0, sx = {} }: { children: React.ReactNode, delay?: number, sx?: React.CSSProperties & Record<string, unknown> }) => (
-    <MotionPaper
-        className="glass-effect"
-        initial={{ y: 50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay }}
-        whileHover={{ scale: 1.01, zIndex: 10, transition: { duration: 0.3, ease: 'easeOut' } }}
-        sx={{ 
-            p: { xs: 2.5, sm: 4, md: 5 }, 
-            borderRadius: { xs: '30px', md: '40px' }, 
-            position: 'relative', 
-            overflow: 'hidden', 
-            height: '100%', 
-            ...sx 
-        }}
-    >
-        {children}
-    </MotionPaper>
-);
 
 const PropDashboard = () => {
     const { user } = useAuth();
@@ -141,39 +125,19 @@ const PropDashboard = () => {
                         </Button>
                     </MotionPaper>
 
-                    <Dialog open={openSetup} onClose={() => setOpenSetup(false)} PaperProps={{ sx: { borderRadius: '15px', minWidth: 400 } }}>
-                        <DialogTitle>Setup Prop Account</DialogTitle>
-                        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-                            <TextField select label="Firm Name" value={firmName} onChange={(e) => setFirmName(e.target.value)} fullWidth>
-                                <MenuItem value="The Funded Room">The Funded Room</MenuItem>
-                                <MenuItem value="FTMO">FTMO</MenuItem>
-                                <MenuItem value="Other">Other</MenuItem>
-                            </TextField>
-                            <TextField select label="Account Type" value={accountType} onChange={(e) => setAccountType(e.target.value)} fullWidth sx={{ mt: 1 }}>
-                                <MenuItem value="1_STEP">1-Step Evaluation</MenuItem>
-                                <MenuItem value="2_STEP">2-Step Evaluation</MenuItem>
-                                <MenuItem value="INSTANT">Instant Funding</MenuItem>
-                            </TextField>
-                            <TextField type="number" label="Account Size ($)" value={accountSize} onChange={(e) => setAccountSize(Number(e.target.value))} fullWidth sx={{ mt: 1 }} />
-                            <TextField
-                                select
-                                label="Current Status"
-                                value={status}
-                                onChange={(e) => setStatus(e.target.value)}
-                                fullWidth
-                                sx={{ mt: 1 }}
-                            >
-                                {accountType !== 'INSTANT' && <MenuItem value="PHASE_1">Phase 1 (Evaluation)</MenuItem>}
-                                {accountType === '2_STEP' && <MenuItem value="PHASE_2">Phase 2 (Evaluation)</MenuItem>}
-                                <MenuItem value="FUNDED">Funded / Master</MenuItem>
-                                <MenuItem value="FAILED" sx={{ color: 'error.main' }}>FAILED (Account Revoked)</MenuItem>
-                            </TextField>
-                        </DialogContent>
-                        <DialogActions sx={{ p: 3 }}>
-                            <Button onClick={() => setOpenSetup(false)}>Cancel</Button>
-                            <Button variant="contained" onClick={handleCreateAccount} sx={{ borderRadius: '10px !important' }}>Save Account</Button>
-                        </DialogActions>
-                    </Dialog>
+                    <SetupAccountDialog
+                        open={openSetup}
+                        onClose={() => setOpenSetup(false)}
+                        firmName={firmName}
+                        setFirmName={setFirmName}
+                        accountType={accountType}
+                        setAccountType={setAccountType}
+                        accountSize={accountSize}
+                        setAccountSize={setAccountSize}
+                        status={status}
+                        setStatus={setStatus}
+                        onCreate={handleCreateAccount}
+                    />
                 </Box>
             </Box>
         );
@@ -346,9 +310,9 @@ const PropDashboard = () => {
                                         <Typography variant="caption" sx={{ fontWeight: 'bold' }}>{format(day, 'MMM d')}</Typography>
                                         {hasTrades && (
                                             <Box>
-                                                <Typography 
-                                                    sx={{ 
-                                                        fontWeight: 'bold', 
+                                                <Typography
+                                                    sx={{
+                                                        fontWeight: 'bold',
                                                         color: 'white',
                                                         whiteSpace: 'nowrap',
                                                         overflow: 'hidden',
@@ -391,45 +355,16 @@ const PropDashboard = () => {
                 </Grid>
             </Grid>
 
-            <Dialog open={openEdit} onClose={() => setOpenEdit(false)} PaperProps={{ sx: { borderRadius: '30px', minWidth: 450 } }}>
-                <DialogTitle sx={{ fontWeight: 'bold' }}>Edit Prop Account Settings</DialogTitle>
-                <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
-                    <Box sx={{ p: 2, bgcolor: 'rgba(244, 67, 54, 0.1)', borderRadius: '15px', border: '1px solid rgba(244, 67, 54, 0.3)' }}>
-                        <Typography variant="body2" color="error.main" fontWeight="bold" display="flex" alignItems="center">
-                            <Warning sx={{ fontSize: 18, mr: 1 }} /> TRADE RESET WARNING
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                            Manually changing the account status will <strong>DELETE ALL TRADES</strong> associated with {account.firmName}. This action cannot be undone.
-                        </Typography>
-                    </Box>
-
-                    <TextField select label="Firm Name" value={firmName} disabled fullWidth>
-                        <MenuItem value={firmName}>{firmName}</MenuItem>
-                    </TextField>
-                    <TextField select label="Account Type" value={accountType} disabled fullWidth>
-                        <MenuItem value={accountType}>{accountType.replace('_', ' ')}</MenuItem>
-                    </TextField>
-                    <TextField type="number" label="Starting Balance ($)" value={accountSize} disabled fullWidth />
-
-                    <TextField
-                        select
-                        label="Update Status"
-                        value={status}
-                        onChange={(e) => setStatus(e.target.value)}
-                        fullWidth
-                        autoFocus
-                    >
-                        {accountType !== 'INSTANT' && <MenuItem value="PHASE_1">Phase 1 (Evaluation)</MenuItem>}
-                        {accountType === '2_STEP' && <MenuItem value="PHASE_2">Phase 2 (Evaluation)</MenuItem>}
-                        <MenuItem value="FUNDED">Funded / Master</MenuItem>
-                        <MenuItem value="FAILED" sx={{ color: 'error.main' }}>FAILED (Account Revoked)</MenuItem>
-                    </TextField>
-                </DialogContent>
-                <DialogActions sx={{ p: 3 }}>
-                    <Button onClick={() => setOpenEdit(false)}>Cancel</Button>
-                    <Button variant="contained" color="error" onClick={handleUpdateAccount} sx={{ borderRadius: '10px !important', px: 3 }}>Reset & Update Status</Button>
-                </DialogActions>
-            </Dialog>
+            <EditAccountDialog
+                open={openEdit}
+                onClose={() => setOpenEdit(false)}
+                firmName={firmName}
+                accountType={accountType}
+                accountSize={accountSize}
+                status={status}
+                setStatus={setStatus}
+                onUpdate={handleUpdateAccount}
+            />
         </Box>
     );
 };
