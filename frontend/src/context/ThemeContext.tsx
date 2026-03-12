@@ -1,23 +1,10 @@
-import { createContext, useContext, useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { ThemeProvider as MUIThemeProvider } from '@mui/material/styles';
 import { lightTheme, darkTheme } from '../theme';
+import { ThemeContext } from './ThemeContextType';
 
-interface ThemeContextType {
-    mode: 'light' | 'dark';
-    glassMode: 'tinted' | 'clear';
-    toggleTheme: () => void;
-    setGlassMode: (mode: 'tinted' | 'clear') => void;
-}
 
-const ThemeContext = createContext<ThemeContextType>({
-    mode: 'light',
-    glassMode: 'tinted',
-    toggleTheme: () => { },
-    setGlassMode: () => { },
-});
-
-export const useThemeContext = () => useContext(ThemeContext);
 
 export const CustomThemeProvider = ({ children }: { children: ReactNode }) => {
     const [mode, setMode] = useState<'light' | 'dark'>(() => {

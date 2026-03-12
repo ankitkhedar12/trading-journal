@@ -2,7 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App.tsx';
-import './index.css';
+import './styles/style.scss';
 import { CustomThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { CssBaseline } from '@mui/material';

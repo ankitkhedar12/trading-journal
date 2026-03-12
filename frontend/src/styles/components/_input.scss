@@ -1,0 +1,787 @@
+@use "../abstracts" as *;
+
+//common input style ----------
+.form-group {
+  margin-bottom: 20px;
+  position: relative;
+  label {
+    font-size: $text-sm;
+    margin-bottom: 5px;
+    color: $dark;
+    font-weight: 500;
+    sup {
+      color: $danger;
+    }
+  }
+  .form-control,
+  select {
+    border-radius: 10px;
+    border: 1px solid rgba($dark, 0.1);
+    background: $white;
+    box-shadow: 0 1px 2px 0 rgba(228, 229, 231, 0.24);
+    padding: 10px 12px;
+    font-size: $text-md;
+    color: $dark;
+    resize: none;
+    caret-color: $dark;
+    font-weight: 300;
+    &::placeholder {
+      color: #808080;
+    }
+
+    &:-webkit-autofill {
+      -webkit-text-fill-color: $dark !important;
+    }
+
+    &:disabled {
+      background: transparent;
+    }
+
+    &:focus {
+      outline: none;
+      box-shadow: none;
+      border: 1px solid rgba($white, 0.6);
+      background: $grey;
+      color: $dark;
+    }
+  }
+  .auth-msg {
+    font-size: $text-xs;
+    margin: 5px 0 0;
+    font-weight: 400;
+    &.error {
+      color: $danger !important;
+    }
+  }
+  .icon-align {
+    position: relative;
+    input {
+      padding-right: 46px;
+    }
+    &.left {
+      input {
+        padding-left: 46px;
+      }
+      img,
+      button,
+      svg {
+        left: 25px;
+      }
+    }
+    &.right {
+      img {
+        right: 5px;
+      }
+    }
+    .show-icon {
+      background-color: transparent;
+      border: none;
+      padding: 0;
+      position: absolute;
+      top: 50%;
+      right: 0px;
+      transform: translate(-50%, -50%);
+      width: 25px;
+      height: 25px;
+      img,
+      svg {
+        width: 20px;
+        height: 20px;
+        object-fit: contain;
+      }
+    }
+  }
+}
+
+select {
+  cursor: pointer;
+  -moz-appearance: none; /* Firefox */
+  -webkit-appearance: none; /* Safari and Chrome */
+  appearance: none;
+  background: #1e1e1e !important;
+  option {
+    color: $dark;
+  }
+}
+
+/* Chrome, Opera */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  transition: background-color 5000s ease-in-out 0s;
+  -webkit-text-fill-color: $white !important;
+}
+
+/* Firefox */
+input:-moz-autofill,
+input:-moz-autofill:hover,
+input:-moz-autofill:focus,
+input:-moz-autofill:active {
+  transition: background-color 5000s ease-in-out 0s;
+  color: $white !important;
+}
+
+/* Safari */
+input:-webkit-autofill {
+  transition: background-color 5000s ease-in-out 0s;
+  -webkit-text-fill-color: $white !important;
+}
+
+// //upload box style ----------
+.upload-box {
+  border: 1px solid rgba($white, 0.6);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: $white;
+  position: relative;
+  .upload-para {
+    font-weight: 500;
+    margin: 10px 0;
+  }
+  .browse {
+    text-align: center;
+    color: rgba($white, 0.6);
+    margin: 0;
+    span {
+      color: $dark;
+      font-weight: 600;
+      text-decoration: underline;
+    }
+  }
+  input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+  }
+}
+
+//upload-images-card
+.upload-images-card {
+  border: 1px solid rgba($white, 0.6);
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+
+  input {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    opacity: 0;
+  }
+
+  .card-inner {
+    p {
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 20px;
+      color: rgba($white, 0.6);
+      margin: 0px;
+    }
+  }
+}
+
+//uploaded-images-box
+.uploaded-images-box {
+  padding-top: 10px;
+
+  .name {
+    h4 {
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 20px;
+      color: rgba($white, 0.6);
+      margin: 0px 0px 10px;
+    }
+  }
+
+  .uploaded-images-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+
+    .uploaded-image-item {
+      position: relative;
+      display: inline-block;
+
+      img {
+        width: 90px;
+        height: 90px;
+        min-width: 90px;
+        border-radius: 16px;
+        border: 3px solid transparent;
+        object-fit: cover;
+        object-position: top;
+      }
+
+      .close-btn {
+        padding: 0px;
+        background-color: rgba(0, 0, 0, 0.7);
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        z-index: 1;
+        border-radius: 100px;
+        &.close-btn-border {
+          svg {
+            border: 1px solid rgba($white, 0.6);
+            border-radius: 100%;
+          }
+        }
+      }
+
+      .item-radio {
+        position: absolute;
+        left: 0px;
+        top: 0px;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+        opacity: 0;
+      }
+
+      .item-radio:checked + img {
+        border-color: $primary;
+      }
+    }
+  }
+}
+
+//date picker style ----------
+// .custom-datepicker {
+// 	display: flex !important;
+// 	align-items: center;
+// 	justify-content: space-between;
+// 	font-weight: 300 !important;
+// 	svg {
+// 		path {
+// 			fill: $white;
+// 		}
+// 	}
+// }
+
+//new Date picker style -------------------
+.custom-datepicker {
+  .react-date-picker {
+    resize: none;
+    caret-color: $primary;
+    width: 100%;
+    padding: 8.5px;
+    border-radius: 12px;
+    background-color: transparent;
+    outline: none;
+    color: $white;
+    border: 1px solid rgba($white, 0.6);
+    font-size: 16px;
+    letter-spacing: 4px;
+    font-weight: 300 !important;
+    line-height: 20px;
+    border-radius: 0;
+    // box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+    .react-date-picker__wrapper {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      border: none;
+
+      .react-date-picker__clear-button,
+      .react-date-picker__calendar-button {
+        svg {
+          stroke: #fff;
+        }
+      }
+
+      .react-date-picker__inputGroup__leadingZero {
+        width: 19px;
+      }
+      .react-date-picker__inputGroup {
+        width: 100%;
+        input {
+          padding: 0;
+          border: none;
+          border-radius: 0;
+        }
+      }
+      button {
+        background: transparent;
+        border: none;
+        height: auto;
+      }
+    }
+    .react-date-picker__calendar {
+      z-index: 2;
+      color: #2b2b2b;
+      .react-calendar__month-view {
+        .react-calendar__month-view__weekdays {
+          .react-calendar__month-view__weekdays__weekday {
+            abbr {
+              text-decoration: none;
+            }
+          }
+        }
+      }
+    }
+
+    &.react-date-picker--disabled {
+      opacity: 0.4;
+    }
+  }
+  .react-calendar__tile:disabled {
+    opacity: 0.4;
+  }
+  .react-date-picker__calendar {
+    .react-calendar {
+      background: #081217;
+      .react-calendar__navigation {
+        button {
+          color: $white;
+        }
+        button:disabled {
+          background: #081217;
+        }
+        .react-calendar__navigation__arrow {
+          &:hover,
+          &:focus {
+            background: rgba($primary, 1);
+          }
+        }
+        .react-calendar__navigation__label {
+          &:hover {
+            background: rgba($primary, 1);
+          }
+          &:enabled:focus {
+            background: rgba($primary, 1);
+          }
+        }
+      }
+      .react-calendar__viewContainer {
+        .react-calendar__month-view {
+          .react-calendar__month-view__weekdays {
+            .react-calendar__month-view__weekdays__weekday {
+              abbr {
+                color: $white;
+                font-weight: 400;
+              }
+            }
+          }
+          .react-calendar__month-view__days {
+            .react-calendar__tile {
+              &:hover {
+                background-color: rgba($primary, 1);
+              }
+            }
+            .react-calendar__tile:disabled {
+              background-color: #081217;
+              color: $white;
+            }
+            .react-calendar__month-view__days__day {
+              abbr {
+                color: $white;
+              }
+            }
+            .react-calendar__tile--now {
+              background-color: rgba($dark, 1);
+              abbr {
+                color: $dark;
+              }
+            }
+          }
+        }
+
+        .react-calendar__decade-view__years {
+          .react-calendar__tile {
+            background: #081217;
+            color: $white;
+          }
+        }
+        .react-calendar__year-view__months {
+          .react-calendar__tile {
+            background: #081217;
+            color: $white;
+          }
+        }
+
+        .react-calendar__month-view__days {
+          .react-calendar__tile {
+            &.react-calendar__tile--active {
+              background-color: rgba($primary, 1);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+.calendar {
+  position: absolute;
+  top: 110%;
+  left: 0;
+  z-index: 100;
+  background-color: #2b2b2b;
+  color: #fff;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+  width: 100%;
+  max-width: 300px;
+
+  // Root
+  .rdp-root {
+    background-color: inherit;
+    color: inherit;
+  }
+
+  // Nav buttons
+  .rdp-nav {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+
+    .rdp-button_previous,
+    .rdp-button_next {
+      background: transparent;
+      border: none;
+      color: #ddd;
+      cursor: pointer;
+      padding: 0.25rem;
+
+      &:hover {
+        background-color: #3a3a3a;
+        border-radius: 4px;
+      }
+
+      .rdp-chevron polygon {
+        fill: #ddd;
+      }
+    }
+  }
+
+  // Caption
+  .rdp-caption_label {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #f0f0f0;
+  }
+
+  // Weekdays
+  .rdp-weekday {
+    color: $grey;
+    font-weight: 700;
+    font-size: $text-sm;
+    text-transform: uppercase;
+    padding-bottom: 0.5rem;
+    text-align: center;
+  }
+
+  // Days
+  .rdp-day {
+    button {
+      background: transparent;
+      border: none;
+      color: #eee;
+      padding: 2px;
+      border-radius: 6px;
+      width: 25px;
+      height: 25px;
+      cursor: pointer;
+      font-size: $text-sm;
+      &:hover {
+        background-color: #444;
+      }
+    }
+
+    &.rdp-today button {
+      border: 1px solid $dark;
+    }
+
+    &.rdp-selected button {
+      background-color: $dark;
+      color: $dark;
+    }
+
+    &.rdp-outside {
+      button {
+        color: #666;
+        opacity: 0.5;
+      }
+    }
+
+    // &.rdp-hidden {
+    //   display: none;
+    // }
+  }
+
+  // Grid
+  .rdp-month_grid {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .rdp-week {
+    display: table-row;
+  }
+
+  .rdp-day {
+    display: table-cell;
+    text-align: center;
+  }
+
+  .rdp-months {
+    position: relative;
+    .rdp-month_caption {
+      position: absolute;
+      top: 4px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      width: 80%;
+      margin: 0 auto;
+      span {
+        font-size: $text-sm;
+      }
+    }
+  }
+}
+
+//react time picker style ----------
+.react-time-picker {
+  padding: 10.5px 15px !important;
+  .react-time-picker__wrapper {
+    border: 0 !important;
+    select {
+      padding: 0;
+      border: 0;
+    }
+    input,
+    select {
+      color: $white;
+    }
+    .react-time-picker__clock-button,
+    .react-time-picker__clear-button {
+      padding-block: 0;
+      svg {
+        line {
+          stroke: $white;
+        }
+        circle,
+        path {
+          stroke: $white;
+        }
+      }
+    }
+  }
+}
+
+// custom-checkbox
+.custom-checkbox {
+  display: block;
+  position: relative;
+  padding-left: 30px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  color: $dark;
+  font-size: $text-sm;
+  font-weight: 500;
+  line-height: 20px;
+  position: relative;
+
+  input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 100%;
+    width: 100%;
+    z-index: 1;
+    left: 0px;
+    top: 0px;
+  }
+
+  .checkmark {
+    position: absolute;
+    top: -3px;
+    left: 0;
+    height: 22px;
+    width: 22px;
+    background-color: transparent;
+    border: 2px solid #4f4f4f;
+    border-radius: 8px;
+  }
+
+  .checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+  }
+
+  input:checked ~ .checkmark:after {
+    display: block;
+  }
+
+  .checkmark:after {
+    left: 6px;
+    top: 3px;
+    width: 5px;
+    height: 10px;
+    border: solid #4f4f4f;
+    border-width: 0 2px 2px 0;
+    -webkit-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    transform: rotate(45deg);
+  }
+}
+
+//react phone input style ------------
+.react-tel-input .form-control {
+  background: transparent !important;
+  border-radius: 0 !important;
+  padding-block: 21.5px;
+}
+
+.otp-main {
+  margin-bottom: 10px;
+
+  div {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  input {
+    text-align: center;
+    background-color: transparent;
+    border-radius: 0px;
+    color: $white;
+    font-size: 14px;
+    height: 47px;
+    width: 100% !important;
+    border: 1px solid rgba($white, 0.6);
+  }
+
+  // .common-otp {
+  //  width: 100%;
+  //  margin: 0 5px;
+
+  //  &.width-custom {
+  //      input {
+  //          width: 50px !important;
+  //      }
+  //  }
+  // }
+}
+
+.uploaded-images-box {
+  padding-top: 10px;
+
+  .name {
+    h4 {
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 20px;
+      color: #f9f9f9;
+      margin: 0px 0px 10px;
+    }
+  }
+
+  .uploaded-images-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+
+    .uploaded-image-item {
+      position: relative;
+      display: inline-block;
+
+      img {
+        width: 90px;
+        height: 90px;
+        min-width: 90px;
+        border-radius: 16px;
+        border: 3px solid transparent;
+        object-fit: cover;
+        object-position: top;
+      }
+
+      .pdf-preview {
+        width: 90px;
+        height: 90px;
+        min-width: 90px;
+        border-radius: 16px;
+        border: 3px solid transparent;
+        background-color: #f5f5f5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+
+        span {
+          font-size: 14px;
+          color: #333;
+          padding: 10px;
+        }
+      }
+
+      .close-btn {
+        padding: 0px;
+        background-color: rgba(0, 0, 0, 0.7);
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        z-index: 1;
+        border-radius: 100px;
+        &.close-btn-border {
+          svg {
+            border: 1px solid #f9f9f9;
+            border-radius: 100%;
+          }
+        }
+      }
+
+      .item-radio {
+        position: absolute;
+        left: 0px;
+        top: 0px;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+        opacity: 0;
+      }
+
+      .item-radio:checked + img {
+        border-color: #cea344;
+      }
+    }
+  }
+}
+
+.selected-flag {
+  background-color: $dark;
+}
+
+//switch style ----------
+.form-check-input:checked {
+  background-color: $primary !important;
+  border-color: $primary !important;
+}
+
+.form-check-input:focus {
+  box-shadow: 0 0 0 0.25rem rgba(186, 62, 62, 0.25) !important;
+}

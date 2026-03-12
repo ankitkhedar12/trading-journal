@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContextType';
 import { getBaseUrl } from '../utils/config';
+import { getSecureHeaders } from '../utils/security';
 import type { Trade, DashboardStats, PropDashboardData } from '../types/trade';
 
 // Re-export types so consumers can import from one place
@@ -14,7 +15,7 @@ function useApi<T>(key: readonly unknown[], endpoint: string, options?: { enable
         queryKey: key,
         queryFn: async () => {
             const res = await fetch(`${getBaseUrl()}${endpoint}`, {
-                headers: { 'Authorization': `Bearer ${user?.token}` },
+                headers: getSecureHeaders(user?.token),
             });
             if (!res.ok) return (options?.fallback ?? null) as T;
             return res.json();

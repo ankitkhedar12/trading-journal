@@ -3,12 +3,25 @@ import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { AutoAwesome, Send } from '@mui/icons-material';
-import { useAuth } from '../context/AuthContext';
-import { getBaseUrl } from '../utils/config';
+import { useAuth } from '../../context/AuthContextType';
+import { getBaseUrl } from '../../utils/config';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { journalEntrySchema } from '../../utils/validators';
+import type { JournalEntryFormData } from '../../utils/validators';
+import { sanitizeInput, sanitizeHtml, getSecureHeaders } from '../../utils/security';
 
 const MotionPaper = motion(Paper);
 
-const FloatingCard = ({ children, delay = 0, sx = {} }: { children: React.ReactNode, delay?: number, sx?: any }) => (
+interface JournalEntry {
+    id: string;
+    subject: string;
+    text: string;
+    date: string;
+    tags: string[];
+}
+
+const FloatingCard = ({ children, delay = 0, sx = {} }: { children: React.ReactNode, delay?: number, sx?: React.CSSProperties & Record<string, unknown> }) => (
     <MotionPaper
         className="glass-effect"
         initial={{ y: 50, opacity: 0 }}
@@ -23,58 +36,69 @@ const FloatingCard = ({ children, delay = 0, sx = {} }: { children: React.ReactN
 
 const Journal = () => {
     const { user } = useAuth();
-    const [entry, setEntry] = useState('');
-    const [subject, setSubject] = useState('');
-    const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-    const [entries, setEntries] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [entries, setEntries] = useState<JournalEntry[]>([]);
+    const [isLoadingEntries, setIsLoadingEntries] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+
+    const {
+        register,
+        handleSubmit,
+        reset,
+        formState: { errors },
+    } = useForm<JournalEntryFormData>({
+        resolver: zodResolver(journalEntrySchema),
+        defaultValues: {
+            subject: '',
+            text: '',
+            date: format(new Date(), 'yyyy-MM-dd'),
+        },
+    });
 
     const fetchEntries = async () => {
         try {
             const res = await fetch(`${getBaseUrl()}/api/journal`, {
-                headers: { 'Authorization': `Bearer ${user?.token}` }
+                headers: getSecureHeaders(user?.token),
             });
             if (res.ok) {
                 const data = await res.json();
                 setEntries(data);
             }
-        } catch (error) {
-            console.error("Failed to fetch journal entries:", error);
+        } catch {
+            // Silently fail — logged server-side
         } finally {
-            setIsLoading(false);
+            setIsLoadingEntries(false);
         }
     };
 
     useEffect(() => {
         if (user) fetchEntries();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user]);
 
-    const handleSave = async () => {
-        if (!subject || !entry) return;
+    const onSubmit = async (data: JournalEntryFormData) => {
         setIsSaving(true);
         try {
             const res = await fetch(`${getBaseUrl()}/api/journal`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${user?.token}`
-                },
+                headers: getSecureHeaders(user?.token),
                 body: JSON.stringify({
-                    subject,
-                    text: entry,
-                    date: date,
-                    tags: [] // future enhancement: add tag selector
-                })
+                    subject: sanitizeInput(data.subject, 200),
+                    text: sanitizeInput(data.text, 10000),
+                    date: data.date,
+                    tags: [],
+                }),
             });
 
             if (res.ok) {
-                setSubject('');
-                setEntry('');
-                fetchEntries(); // reload the list
+                reset({
+                    subject: '',
+                    text: '',
+                    date: format(new Date(), 'yyyy-MM-dd'),
+                });
+                fetchEntries();
             }
-        } catch (error) {
-            console.error("Failed to save entry:", error);
+        } catch {
+            // Silently fail
         } finally {
             setIsSaving(false);
         }
@@ -83,9 +107,9 @@ const Journal = () => {
     const todayFormatted = format(new Date(), 'EEEE, MMMM do, yyyy');
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, maxWidth: 900, mx: 'auto' }}>
+        <Box className="journal-page">
             <FloatingCard delay={0.1}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                <Box className="journal-header">
                     <AutoAwesome sx={{ color: 'primary.main', mr: 2, fontSize: 32 }} />
                     <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Daily Reflections</Typography>
                 </Box>
@@ -93,14 +117,20 @@ const Journal = () => {
                     Today is {todayFormatted}. Take a moment to log your psychological state and observations.
                 </Typography>
 
-                <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                <Box
+                    component="form"
+                    onSubmit={handleSubmit(onSubmit)}
+                    className="journal-form"
+                    noValidate
+                >
+                    <Box className="journal-form-row">
                         <TextField
                             fullWidth
                             label="Theme or Subject (e.g., 'Stick to the plan')"
                             variant="outlined"
-                            value={subject}
-                            onChange={(e) => setSubject(e.target.value)}
+                            error={!!errors.subject}
+                            helperText={errors.subject?.message}
+                            {...register('subject')}
                             sx={{ backgroundColor: 'background.paper', borderRadius: 2, flex: 2, minWidth: 250 }}
                         />
                         <TextField
@@ -108,8 +138,9 @@ const Journal = () => {
                             label="Entry Date"
                             variant="outlined"
                             InputLabelProps={{ shrink: true }}
-                            value={date}
-                            onChange={(e) => setDate(e.target.value)}
+                            error={!!errors.date}
+                            helperText={errors.date?.message}
+                            {...register('date')}
                             sx={{ backgroundColor: 'background.paper', borderRadius: 2, flex: 1, minWidth: 150 }}
                         />
                     </Box>
@@ -121,18 +152,19 @@ const Journal = () => {
                         label="Journal Entry"
                         placeholder="What did you do well? What could you improve?"
                         variant="outlined"
-                        value={entry}
-                        onChange={(e) => setEntry(e.target.value)}
+                        error={!!errors.text}
+                        helperText={errors.text?.message}
+                        {...register('text')}
                         sx={{ backgroundColor: 'background.paper', borderRadius: 2 }}
                     />
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <Box className="journal-submit-row">
                         <Button
+                            type="submit"
                             variant="contained"
-                            disabled={isSaving || !subject || !entry}
-                            onClick={handleSave}
+                            disabled={isSaving}
                             endIcon={isSaving ? <CircularProgress size={20} color="inherit" /> : <Send />}
                             size="large"
-                            sx={{ borderRadius: '30px', px: 4, py: 1.5, fontWeight: 'bold' }}
+                            sx={{ px: 6, py: 2, borderRadius: '30px', fontSize: '1.1rem', fontWeight: 'bold' }}
                         >
                             {isSaving ? 'Saving...' : 'Save Entry'}
                         </Button>
@@ -142,7 +174,7 @@ const Journal = () => {
 
             <Typography variant="h5" sx={{ fontWeight: 'bold', mt: 4, mb: 1 }}>Recent Entries</Typography>
 
-            {isLoading ? (
+            {isLoadingEntries ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
                     <CircularProgress />
                 </Box>
@@ -153,13 +185,13 @@ const Journal = () => {
             ) : (
                 entries.map((item, index) => (
                     <FloatingCard key={item.id} delay={0.2 + (index * 0.1)} sx={{ p: 3 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                        <Box className="journal-entry-header">
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                 <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.dark', fontWeight: 'bold' }}>
                                     {format(new Date(item.date), 'dd')}
                                 </Avatar>
                                 <Box>
-                                    <Typography variant="h6" sx={{ fontWeight: 'bold', lineHeight: 1.2 }}>{item.subject}</Typography>
+                                    <Typography variant="h6" sx={{ fontWeight: 'bold', lineHeight: 1.2 }}>{sanitizeHtml(item.subject)}</Typography>
                                     <Typography variant="caption" color="text.secondary">{format(new Date(item.date), 'MMMM do, yyyy')}</Typography>
                                 </Box>
                             </Box>
@@ -172,12 +204,11 @@ const Journal = () => {
                             )}
                         </Box>
                         <Typography variant="body1" sx={{ mt: 2, color: 'text.primary', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-                            {item.text}
+                            {sanitizeHtml(item.text)}
                         </Typography>
                     </FloatingCard>
                 ))
             )}
-
         </Box>
     );
 };

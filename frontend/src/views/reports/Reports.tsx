@@ -1,16 +1,26 @@
 import { Box, Typography, Paper, CircularProgress } from '@mui/material';
 import { motion } from 'framer-motion';
-import { useAllTrades } from '../hooks/useTradeQueries';
+import { useAllTrades } from '../../hooks/useTradeQueries';
+
+interface TradeRow {
+    id: string;
+    symbol: string;
+    volume: string;
+    entryPrice: number;
+    closePrice: number;
+    pnl: number;
+    openedAt: string;
+}
 
 const Reports = () => {
     const { data: trades = [], isLoading } = useAllTrades();
 
     const getPnlColor = (pnl: number) => {
-        return pnl > 0 ? '#4caf50' : pnl < 0 ? '#f44336' : '#9e9e9e';
+        return pnl > 0 ? '#4caf50' : pnl < 0 ? '#f44336' : '#9e9e9eff';
     };
 
     const getPnlBg = (pnl: number) => {
-        return pnl > 0 ? 'rgba(76, 175, 80, 0.1)' : pnl < 0 ? 'rgba(244, 67, 54, 0.1)' : 'rgba(158, 158, 158, 0.1)';
+        return pnl > 0 ? 'rgba(76, 175, 80, 0.05)' : pnl < 0 ? 'rgba(244, 67, 54, 0.05)' : 'rgba(158, 158, 158, 0.03)';
     };
 
     if (isLoading) {
@@ -22,7 +32,7 @@ const Reports = () => {
     }
 
     return (
-        <Box>
+        <Box className="reports-page">
             <Typography variant="h4" sx={{ mb: 4, fontWeight: 'bold' }}>Trade Reports</Typography>
 
             {trades.length === 0 ? (
@@ -30,9 +40,8 @@ const Reports = () => {
                     <Typography variant="body1" color="text.secondary">No trades found. Go to Import to add your data.</Typography>
                 </Paper>
             ) : (
-                <Paper className="glass-effect" sx={{ p: 4, borderRadius: '30px' }}>
-                    {/* Header Row */}
-                    <Box sx={{ display: 'flex', px: 2, mb: 2, borderBottom: '1px solid rgba(150,150,150,0.2)', pb: 2 }}>
+                <Paper className="glass-effect" sx={{ p: { xs: 2, sm: 4 }, borderRadius: '30px' }}>
+                    <Box className="report-header-row" sx={{ display: { xs: 'none', md: 'flex' } }}>
                         <Typography variant="subtitle2" sx={{ flex: 1, fontWeight: 'bold', color: 'text.secondary' }}>Symbol</Typography>
                         <Typography variant="subtitle2" sx={{ flex: 1, fontWeight: 'bold', color: 'text.secondary' }}>Vol(Lots)</Typography>
                         <Typography variant="subtitle2" sx={{ flex: 1, fontWeight: 'bold', color: 'text.secondary' }}>Entry / Close</Typography>
@@ -40,8 +49,8 @@ const Reports = () => {
                         <Typography variant="subtitle2" sx={{ flex: 1, fontWeight: 'bold', color: 'text.secondary' }}>Date</Typography>
                     </Box>
 
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        {trades.map((row, index) => (
+                    <Box className="report-trade-list">
+                        {(trades as TradeRow[]).map((row, index) => (
                             <motion.div
                                 key={row.id}
                                 initial={{ opacity: 0, y: 20 }}
@@ -49,24 +58,23 @@ const Reports = () => {
                                 transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: index * 0.05 }}
                             >
                                 <Paper
+                                    className="report-trade-row"
                                     sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        p: 2,
-                                        borderRadius: '15px',
-                                        backdropFilter: 'blur(10px)',
                                         bgcolor: getPnlBg(row.pnl),
                                         borderLeft: `4px solid ${getPnlColor(row.pnl)}`
                                     }}
                                 >
-                                    <Typography variant="body2" sx={{ flex: 1, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <Box sx={{ width: 16, height: 16, borderRadius: '50%', bgcolor: getPnlColor(row.pnl), color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>
+                                    <Typography variant="body2" sx={{ flex: 1, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
+                                        <Box
+                                            className="report-symbol-dot"
+                                            sx={{ bgcolor: getPnlColor(row.pnl) }}
+                                        >
                                             {row.symbol.charAt(0).toUpperCase()}
                                         </Box>
                                         {row.symbol}
                                     </Typography>
-                                    <Typography variant="body2" sx={{ flex: 1 }}>{row.volume}</Typography>
-                                    <Typography variant="body2" sx={{ flex: 1, fontSize: '0.85rem' }}>
+                                    <Typography variant="body2" sx={{ flex: 1, color: 'text.secondary' }}>{row.volume}</Typography>
+                                    <Typography variant="body2" sx={{ flex: 1, fontSize: '0.85rem', color: 'text.secondary' }}>
                                         {row.entryPrice} &rarr; {row.closePrice}
                                     </Typography>
                                     <Typography variant="body2" sx={{ flex: 1, fontWeight: 'bold', color: getPnlColor(row.pnl) }}>

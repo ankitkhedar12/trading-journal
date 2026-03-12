@@ -2,22 +2,36 @@ import { Box, Typography, Paper, CircularProgress, Button, Grid, TextField, Menu
 import { motion, AnimatePresence } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip as RechartsTooltip, ReferenceLine } from 'recharts';
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { getBaseUrl } from '../utils/config';
-import { usePropDashboard, useInvalidateTrades } from '../hooks/useTradeQueries';
+import { useAuth } from '../../context/AuthContextType';
+import { getBaseUrl } from '../../utils/config';
+import { usePropDashboard, useInvalidateTrades } from '../../hooks/useTradeQueries';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, subMonths, addMonths } from 'date-fns';
 import { CalendarMonth, Add, Warning, ShowChart, Security, Gavel, ChevronLeft, ChevronRight } from '@mui/icons-material';
+import { getSecureHeaders } from '../../utils/security';
+
+interface ProfitCalendarEntry {
+    date: string;
+    pnl: number;
+    tradesCount: number;
+}
 
 const MotionPaper = motion(Paper);
 
-const FloatingCard = ({ children, delay = 0, sx = {} }: { children: React.ReactNode, delay?: number, sx?: any }) => (
+const FloatingCard = ({ children, delay = 0, sx = {} }: { children: React.ReactNode, delay?: number, sx?: React.CSSProperties & Record<string, unknown> }) => (
     <MotionPaper
         className="glass-effect"
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay }}
         whileHover={{ scale: 1.01, zIndex: 10, transition: { duration: 0.3, ease: 'easeOut' } }}
-        sx={{ p: 3, borderRadius: '30px', position: 'relative', overflow: 'hidden', height: '100%', ...sx }}
+        sx={{ 
+            p: { xs: 2.5, sm: 4, md: 5 }, 
+            borderRadius: { xs: '30px', md: '40px' }, 
+            position: 'relative', 
+            overflow: 'hidden', 
+            height: '100%', 
+            ...sx 
+        }}
     >
         {children}
     </MotionPaper>
@@ -42,11 +56,12 @@ const PropDashboard = () => {
     // Pre-fill form when data loads
     useEffect(() => {
         if (dashboardData?.account) {
-            setFirmName(dashboardData.account.firmName);
-            setAccountType(dashboardData.account.accountType);
-            setAccountSize(dashboardData.account.accountSize);
-            setStatus(dashboardData.account.status);
+            if (dashboardData.account.firmName !== firmName) setFirmName(dashboardData.account.firmName);
+            if (dashboardData.account.accountType !== accountType) setAccountType(dashboardData.account.accountType);
+            if (dashboardData.account.accountSize !== accountSize) setAccountSize(dashboardData.account.accountSize);
+            if (dashboardData.account.status !== status) setStatus(dashboardData.account.status);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dashboardData?.account]);
 
     useEffect(() => {
@@ -56,7 +71,8 @@ const PropDashboard = () => {
                 setStatus(defaultStatus);
             }
         }
-    }, [accountType, dashboardData?.account]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [accountType]);
 
     const invalidatePropData = () => invalidateTrades();
 
@@ -64,42 +80,44 @@ const PropDashboard = () => {
         try {
             await fetch(`${getBaseUrl()}/api/prop-account`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${user?.token}`, 'Content-Type': 'application/json' },
+                headers: getSecureHeaders(user?.token),
                 body: JSON.stringify({ firmName, accountType, accountSize: Number(accountSize), status })
             });
             setOpenSetup(false);
             invalidatePropData();
-        } catch (e) {
-            console.error(e);
+        } catch {
+            // Error handled server-side
         }
     };
 
     const handleUpdateAccount = async () => {
+        if (!dashboardData?.account?.id) return;
         try {
-            const res = await fetch(`${getBaseUrl()}/api/prop-account/${dashboardData!.account.id}`, {
+            const res = await fetch(`${getBaseUrl()}/api/prop-account/${dashboardData.account.id}`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${user?.token}`, 'Content-Type': 'application/json' },
+                headers: getSecureHeaders(user?.token),
                 body: JSON.stringify({ firmName, accountType, accountSize: Number(accountSize), status })
             });
             if (res.ok) {
                 setOpenEdit(false);
                 invalidatePropData();
             }
-        } catch (e) {
-            console.error(e);
+        } catch {
+            // Error handled server-side
         }
     };
 
     const handleDeleteAccount = async () => {
+        if (!dashboardData?.account?.id) return;
         if (!window.confirm("Are you sure you want to delete this account? This will remove all tracking for this prop firm.")) return;
         try {
-            await fetch(`${getBaseUrl()}/api/prop-account/${dashboardData!.account.id}`, {
+            await fetch(`${getBaseUrl()}/api/prop-account/${dashboardData.account.id}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${user?.token}` }
+                headers: getSecureHeaders(user?.token),
             });
             invalidatePropData();
-        } catch (e) {
-            console.error(e);
+        } catch {
+            // Error handled server-side
         }
     };
 
@@ -110,51 +128,53 @@ const PropDashboard = () => {
     // --- SETUP VIEW ---
     if (!dashboardData?.account) {
         return (
-            <Box sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-                <MotionPaper initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} sx={{ p: 5, borderRadius: '30px', textAlign: 'center', maxWidth: 500 }} elevation={4} >
-                    <Security sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
-                    <Typography variant="h4" gutterBottom fontWeight="bold">Prop Firm Tracker</Typography>
-                    <Typography color="text.secondary" mb={4}>
-                        Track your daily drawdown, profit targets, and consistency rules automatically using your imported trades.
-                    </Typography>
-                    <Button variant="contained" size="large" onClick={() => setOpenSetup(true)} startIcon={<Add />} sx={{ borderRadius: '10px !important', px: 4, py: 1.5 }}>
-                        Setup New Account
-                    </Button>
-                </MotionPaper>
+            <Box className="funded-page">
+                <Box className="funded-setup-center">
+                    <MotionPaper initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="funded-setup-card" elevation={4}>
+                        <Security sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
+                        <Typography variant="h4" gutterBottom fontWeight="bold">Prop Firm Tracker</Typography>
+                        <Typography color="text.secondary" mb={4}>
+                            Track your daily drawdown, profit targets, and consistency rules automatically using your imported trades.
+                        </Typography>
+                        <Button variant="contained" size="large" onClick={() => setOpenSetup(true)} startIcon={<Add />} sx={{ borderRadius: '10px !important', px: 4, py: 1.5 }}>
+                            Setup New Account
+                        </Button>
+                    </MotionPaper>
 
-                <Dialog open={openSetup} onClose={() => setOpenSetup(false)} PaperProps={{ sx: { borderRadius: '15px', minWidth: 400 } }}>
-                    <DialogTitle>Setup Prop Account</DialogTitle>
-                    <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-                        <TextField select label="Firm Name" value={firmName} onChange={(e) => setFirmName(e.target.value)} fullWidth>
-                            <MenuItem value="The Funded Room">The Funded Room</MenuItem>
-                            <MenuItem value="FTMO">FTMO</MenuItem>
-                            <MenuItem value="Other">Other</MenuItem>
-                        </TextField>
-                        <TextField select label="Account Type" value={accountType} onChange={(e) => setAccountType(e.target.value)} fullWidth sx={{ mt: 1 }}>
-                            <MenuItem value="1_STEP">1-Step Evaluation</MenuItem>
-                            <MenuItem value="2_STEP">2-Step Evaluation</MenuItem>
-                            <MenuItem value="INSTANT">Instant Funding</MenuItem>
-                        </TextField>
-                        <TextField type="number" label="Account Size ($)" value={accountSize} onChange={(e) => setAccountSize(Number(e.target.value))} fullWidth sx={{ mt: 1 }} />
-                        <TextField 
-                            select 
-                            label="Current Status" 
-                            value={status} 
-                            onChange={(e) => setStatus(e.target.value)} 
-                            fullWidth 
-                            sx={{ mt: 1 }}
-                        >
-                            {accountType !== 'INSTANT' && <MenuItem value="PHASE_1">Phase 1 (Evaluation)</MenuItem>}
-                            {accountType === '2_STEP' && <MenuItem value="PHASE_2">Phase 2 (Evaluation)</MenuItem>}
-                            <MenuItem value="FUNDED">Funded / Master</MenuItem>
-                            <MenuItem value="FAILED" sx={{ color: 'error.main' }}>FAILED (Account Revoked)</MenuItem>
-                        </TextField>
-                    </DialogContent>
-                    <DialogActions sx={{ p: 3 }}>
-                        <Button onClick={() => setOpenSetup(false)}>Cancel</Button>
-                        <Button variant="contained" onClick={handleCreateAccount} sx={{ borderRadius: '10px !important' }}>Save Account</Button>
-                    </DialogActions>
-                </Dialog>
+                    <Dialog open={openSetup} onClose={() => setOpenSetup(false)} PaperProps={{ sx: { borderRadius: '15px', minWidth: 400 } }}>
+                        <DialogTitle>Setup Prop Account</DialogTitle>
+                        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+                            <TextField select label="Firm Name" value={firmName} onChange={(e) => setFirmName(e.target.value)} fullWidth>
+                                <MenuItem value="The Funded Room">The Funded Room</MenuItem>
+                                <MenuItem value="FTMO">FTMO</MenuItem>
+                                <MenuItem value="Other">Other</MenuItem>
+                            </TextField>
+                            <TextField select label="Account Type" value={accountType} onChange={(e) => setAccountType(e.target.value)} fullWidth sx={{ mt: 1 }}>
+                                <MenuItem value="1_STEP">1-Step Evaluation</MenuItem>
+                                <MenuItem value="2_STEP">2-Step Evaluation</MenuItem>
+                                <MenuItem value="INSTANT">Instant Funding</MenuItem>
+                            </TextField>
+                            <TextField type="number" label="Account Size ($)" value={accountSize} onChange={(e) => setAccountSize(Number(e.target.value))} fullWidth sx={{ mt: 1 }} />
+                            <TextField
+                                select
+                                label="Current Status"
+                                value={status}
+                                onChange={(e) => setStatus(e.target.value)}
+                                fullWidth
+                                sx={{ mt: 1 }}
+                            >
+                                {accountType !== 'INSTANT' && <MenuItem value="PHASE_1">Phase 1 (Evaluation)</MenuItem>}
+                                {accountType === '2_STEP' && <MenuItem value="PHASE_2">Phase 2 (Evaluation)</MenuItem>}
+                                <MenuItem value="FUNDED">Funded / Master</MenuItem>
+                                <MenuItem value="FAILED" sx={{ color: 'error.main' }}>FAILED (Account Revoked)</MenuItem>
+                            </TextField>
+                        </DialogContent>
+                        <DialogActions sx={{ p: 3 }}>
+                            <Button onClick={() => setOpenSetup(false)}>Cancel</Button>
+                            <Button variant="contained" onClick={handleCreateAccount} sx={{ borderRadius: '10px !important' }}>Save Account</Button>
+                        </DialogActions>
+                    </Dialog>
+                </Box>
             </Box>
         );
     }
@@ -168,27 +188,35 @@ const PropDashboard = () => {
     let totalTradesThisMonth = 0;
     daysInMonth.forEach(day => {
         const dateStr = format(day, 'yyyy-MM-dd');
-        const tradeStats = profitCalendar?.find((p: any) => p.date === dateStr);
+        const tradeStats = profitCalendar?.find((p: ProfitCalendarEntry) => p.date === dateStr);
         if (tradeStats) totalTradesThisMonth += tradeStats.tradesCount;
     });
 
-    const renderProgressBar = (label: string, current: number, max: number, isGood: boolean, isCurrency: boolean = true) => {
+    const renderProgressBar = (label: string, current: number, max: number, isGood: boolean, isCurrency = true) => {
         const pct = Math.min((current / max) * 100, 100);
         const nearLimit = pct > 0 && !isGood ? pct > 85 : false;
         let barColor = isGood ? theme.palette.success.main : theme.palette.warning.main;
         if (nearLimit || (pct >= 100 && !isGood)) barColor = theme.palette.error.main;
 
         return (
-            <Box sx={{ mb: 3, width: '100%' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+            <Box className="progress-bar-container">
+                <Box className="progress-bar-header">
                     <Typography variant="body2" color="text.secondary">{label}</Typography>
                     <Typography variant="body2" fontWeight="bold" color={nearLimit ? 'error.main' : 'text.primary'}>
                         {isCurrency ? `$${current.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : current} / {isCurrency ? `$${max.toLocaleString()}` : max} ({pct.toFixed(1)}%)
                     </Typography>
                 </Box>
-                <Box sx={{ width: '100%', height: 12, bgcolor: 'rgba(255,255,255,0.06)', borderRadius: 6, overflow: 'hidden', position: 'relative' }}>
-                    <Box component={motion.div} initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 1, ease: "easeOut" }}
-                        sx={{ height: '100%', bgcolor: pct > 0 ? (barColor || 'primary.main') : 'transparent', borderRadius: 6, boxShadow: pct > 0 ? `0 0 15px ${barColor || '#9c27b0'}66` : 'none', minWidth: pct > 0 ? 10 : 0 }}
+                <Box className="progress-bar-track">
+                    <Box
+                        component={motion.div}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${pct}%` }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                        className="progress-bar-fill"
+                        sx={{
+                            bgcolor: pct > 0 ? barColor : 'transparent',
+                            boxShadow: pct > 0 ? `0 0 15px ${barColor}66` : 'none',
+                        }}
                     />
                 </Box>
             </Box>
@@ -196,7 +224,7 @@ const PropDashboard = () => {
     };
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <Box className="funded-page">
             {/* Violation Alerts */}
             <AnimatePresence>
                 {(isFailed || violationMessage) && (
@@ -209,7 +237,7 @@ const PropDashboard = () => {
             </AnimatePresence>
 
             {/* Header */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box className="funded-header">
                 <Box>
                     <Typography variant="h4" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         {account.firmName}
@@ -226,7 +254,7 @@ const PropDashboard = () => {
                 </Box>
             </Box>
 
-            <Grid container spacing={4} sx={{ width: '100%', m: 0 }}>
+            <Grid container spacing={4}>
                 {/* Row 1: Chart and Rules */}
                 <Grid size={{ xs: 12, lg: 9 }} sx={{ display: 'flex' }}>
                     <FloatingCard delay={0.2} sx={{ flexGrow: 1, minHeight: 450, width: '100%' }}>
@@ -268,7 +296,7 @@ const PropDashboard = () => {
                             {rules.maxRisk?.isActive && renderProgressBar("Max 3% Aggregated Risk", rules.maxRisk.currentPct ?? 0, 100, false, false)}
 
                             {rules.consistency?.isActive && (
-                                <Box sx={{ mt: 2, p: 2, bgcolor: 'rgba(156, 39, 176, 0.05)', borderRadius: '30px', border: '1px solid rgba(156, 39, 176, 0.2)' }}>
+                                <Box className="consistency-rule-box">
                                     <Typography variant="caption" color="secondary.main" display="flex" alignItems="center" fontWeight="bold">
                                         <Warning sx={{ fontSize: 16, mr: 0.5 }} /> Consistency Rule (15%)
                                     </Typography>
@@ -295,25 +323,42 @@ const PropDashboard = () => {
                                 <IconButton size="small" onClick={() => setCurrentDate(addMonths(currentDate, 1))}><ChevronRight /></IconButton>
                             </Box>
                         </Box>
-                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1.5 }}>
-                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => <Box key={day} sx={{ textAlign: 'center', color: 'text.secondary', fontWeight: 'bold', fontSize: '0.8rem', mb: 1 }}>{day}</Box>)}
+                        <Box className="calendar-grid">
+                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => <Box key={day} className="calendar-day-header" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>{day}</Box>)}
                             {Array.from({ length: monthStart.getDay() }).map((_, i) => <Box key={`empty-${i}`} />)}
                             {daysInMonth.map((day, i) => {
                                 const dateStr = format(day, 'yyyy-MM-dd');
-                                const tradeStats = profitCalendar.find((p: any) => p.date === dateStr);
+                                const tradeStats = profitCalendar.find((p: ProfitCalendarEntry) => p.date === dateStr);
                                 const hasTrades = !!tradeStats;
                                 const pnl = tradeStats ? tradeStats.pnl : 0;
                                 const count = tradeStats ? tradeStats.tradesCount : 0;
                                 const isPositive = pnl > 0;
                                 return (
-                                    <Paper key={i} elevation={hasTrades ? 4 : 1} sx={{ p: 1.5, height: 80, borderRadius: '15px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', bgcolor: hasTrades ? (isPositive ? 'success.main' : 'error.main') : 'background.paper', color: hasTrades ? 'white' : 'text.disabled', opacity: hasTrades ? 1 : 0.6, border: '1px solid', borderColor: hasTrades ? (isPositive ? 'success.dark' : 'error.dark') : 'divider', transition: 'all 0.2s', cursor: hasTrades ? 'pointer' : 'default', '&:hover': hasTrades ? { transform: 'scale(1.04) translateY(-4px)', zIndex: 10, boxShadow: '0 4px 15px rgba(0,0,0,0.1)' } : {} }}>
+                                    <Paper key={i} elevation={hasTrades ? 4 : 1}
+                                        className={`calendar-day ${hasTrades ? 'calendar-day--has-trades' : 'calendar-day--no-trades'}`}
+                                        sx={{
+                                            bgcolor: hasTrades ? (isPositive ? 'success.main' : 'error.main') : 'background.paper',
+                                            color: hasTrades ? 'white' : 'text.disabled',
+                                            borderColor: hasTrades ? (isPositive ? 'success.dark' : 'error.dark') : 'divider',
+                                            '&:hover': hasTrades ? { transform: 'scale(1.04) translateY(-4px)', zIndex: 10, boxShadow: '0 4px 15px rgba(0,0,0,0.1)' } : {}
+                                        }}
+                                    >
                                         <Typography variant="caption" sx={{ fontWeight: 'bold' }}>{format(day, 'MMM d')}</Typography>
                                         {hasTrades && (
                                             <Box>
-                                                <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'white' }}>
+                                                <Typography 
+                                                    sx={{ 
+                                                        fontWeight: 'bold', 
+                                                        color: 'white',
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        fontSize: '1rem'
+                                                    }}
+                                                >
                                                     {pnl >= 0 ? '+' : '-'}${Math.abs(pnl).toFixed(2)}
                                                 </Typography>
-                                                <Typography variant="caption" sx={{ opacity: 0.9, fontSize: '0.7rem', display: 'block' }}>
+                                                <Typography variant="caption" sx={{ opacity: 0.85, fontSize: '0.65rem', display: 'block', mt: -0.2 }}>
                                                     {count} Trades
                                                 </Typography>
                                             </Box>
@@ -328,7 +373,7 @@ const PropDashboard = () => {
                 <Grid size={{ xs: 12, lg: 3 }} sx={{ display: 'flex' }}>
                     <FloatingCard delay={0.4} sx={{ flexGrow: 1, width: '100%' }}>
                         <Typography variant="h6" mb={3}>Account Matrix</Typography>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Box className="account-stats-list">
                             {[
                                 { label: 'Current P&L', val: `${metrics.totalPnl >= 0 ? '+' : ''}$${Math.abs(metrics.totalPnl).toFixed(2)}`, color: metrics.totalPnl >= 0 ? 'success.main' : 'error.main', bg: metrics.totalPnl >= 0 ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)' },
                                 { label: `Trades (${format(currentDate, 'MMM')})`, val: totalTradesThisMonth, color: 'info.main', bg: 'rgba(33, 150, 243, 0.1)' },
@@ -366,12 +411,12 @@ const PropDashboard = () => {
                     </TextField>
                     <TextField type="number" label="Starting Balance ($)" value={accountSize} disabled fullWidth />
 
-                    <TextField 
-                        select 
-                        label="Update Status" 
-                        value={status} 
-                        onChange={(e) => setStatus(e.target.value)} 
-                        fullWidth 
+                    <TextField
+                        select
+                        label="Update Status"
+                        value={status}
+                        onChange={(e) => setStatus(e.target.value)}
+                        fullWidth
                         autoFocus
                     >
                         {accountType !== 'INSTANT' && <MenuItem value="PHASE_1">Phase 1 (Evaluation)</MenuItem>}

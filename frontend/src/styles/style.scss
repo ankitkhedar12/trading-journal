@@ -1,0 +1,855 @@
+@use "./abstracts" as *;
+@use "./components/buttons";
+@use "./components/cards";
+@use "./components/input";
+
+// ═══════════════════════════════════════════════════════
+// FONT FACES
+// ═══════════════════════════════════════════════════════
+@font-face {
+  font-family: "Exo 2";
+  src: url("/fonts/Exo_2/Exo2-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Oleo Script";
+  src: url("/fonts/Oleo_Script/OleoScript-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Oleo Script";
+  src: url("/fonts/Oleo_Script/OleoScript-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+// ═══════════════════════════════════════════════════════
+// CSS VARIABLES & GLOBAL RESET
+// ═══════════════════════════════════════════════════════
+:root {
+  --bg-light: #f8fafc;
+  --bg-dark: #0f172a;
+  --grid-line-light: rgba(0, 0, 0, 0.05);
+  --grid-line-dark: rgba(255, 255, 255, 0.05);
+  font-family: "Exo 2", "Urbanist", sans-serif;
+
+  /* Liquid Glass Variables */
+  --lg-bg-color: rgba(255, 255, 255, 0.45);
+  --lg-highlight: rgba(255, 255, 255, 0.9);
+  --lg-shadow-light: rgba(0, 0, 0, 0.1);
+}
+
+* {
+  font-family: "Exo 2", "Urbanist", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 100%;
+}
+
+
+
+// ═══════════════════════════════════════════════════════
+// HEADINGS
+// ═══════════════════════════════════════════════════════
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  padding: 0;
+}
+
+h1 {
+  font-size: $heading-xl !important;
+
+  @media (min-width: 768px) and (max-width: 991px) {
+    font-size: $heading-lg !important;
+  }
+
+  @media only screen and (max-width: 767px) {
+    font-size: $heading-md !important;
+  }
+}
+
+h2 {
+  font-size: $heading-md !important;
+
+  @media only screen and (max-width: 767px) {
+    font-size: $heading-sm !important;
+  }
+
+  @media (min-width: 768px) and (max-width: 991px) {
+    font-size: $heading-sm !important;
+  }
+}
+
+h3 {
+  font-size: $text-xxl !important;
+
+  @media only screen and (max-width: 767px) {
+    font-size: $text-md;
+  }
+}
+
+h4 {
+  font-size: $text-xl !important;
+
+  @media only screen and (max-width: 767px) {
+    font-size: $text-md;
+  }
+}
+
+h5 {
+  font-size: $text-lg;
+
+  @media only screen and (max-width: 767px) {
+    font-size: $text-md;
+  }
+}
+
+h6 {
+  font-size: $text-md;
+}
+
+p {
+  font-size: $text-md;
+  margin: 0;
+  padding: 0;
+  word-break: break-word;
+  color: $dark;
+
+  @media only screen and (max-width: 767px) {
+    font-size: $text-md;
+  }
+}
+
+a {
+  font-size: $text-md;
+  cursor: pointer;
+  text-decoration: none !important;
+
+  @media only screen and (max-width: 767px) {
+    font-size: $text-md;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// UTILITY CLASSES
+// ═══════════════════════════════════════════════════════
+
+// Font sizes
+.font10 {
+  font-size: $text-xxs !important;
+}
+
+.font12 {
+  font-size: $text-xs !important;
+}
+
+.font14 {
+  font-size: $text-sm !important;
+}
+
+.font16 {
+  font-size: $text-md !important;
+}
+
+.font18 {
+  font-size: $text-lg !important;
+}
+
+// Colors
+.color-primary {
+  color: $primary !important;
+}
+
+.color-success {
+  color: $success !important;
+}
+
+.color-dark {
+  color: $dark !important;
+}
+
+.color-white {
+  color: $white !important;
+}
+
+.color-danger {
+  color: $danger !important;
+}
+
+// Interactions
+.cursor-pointer {
+  cursor: pointer;
+}
+
+input[type="file"],
+input[type="file"]::-webkit-file-upload-button {
+  cursor: pointer;
+}
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+// ═══════════════════════════════════════════════════════
+// SCROLLBAR
+// ═══════════════════════════════════════════════════════
+* {
+  &::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+    background-color: #e8e0ff;
+    border-radius: 10px;
+  }
+
+  &::-webkit-scrollbar-track {
+    border-radius: 10px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $primary;
+    border-radius: 10px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: $primary;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// LAYOUT HELPERS
+// ═══════════════════════════════════════════════════════
+.button-align {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.common-heading {
+  text-align: center;
+
+  h2 {
+    color: $white;
+    font-weight: 500;
+    width: 60%;
+    margin: 0 auto;
+  }
+
+  p {
+    color: rgba($dark, 0.8);
+    margin-top: 15px;
+  }
+}
+
+.common-spacing {
+  padding-block: 50px;
+}
+
+// ═══════════════════════════════════════════════════════
+// BODY & BACKGROUND
+// ═══════════════════════════════════════════════════════
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-size: 1rem; // Standard 16px base when html is 100%
+  background-color: var(--bg-light);
+  background-image: linear-gradient(var(--grid-line-light) 1px,
+      transparent 1px),
+    linear-gradient(90deg, var(--grid-line-light) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: center bottom;
+  color: #1e293b;
+  transition: background-color 0.3s ease, color 0.3s ease,
+    background-image 0.3s ease;
+  overflow-x: hidden;
+}
+
+// ═══════════════════════════════════════════════════════
+// LIQUID GLASS THEME SYSTEM
+// ═══════════════════════════════════════════════════════
+[data-glass="clear"] {
+  --lg-bg-color: rgba(255, 255, 255, 0.05);
+  --lg-highlight: rgba(255, 255, 255, 0.5);
+}
+
+[data-theme="dark"] {
+  --lg-bg-color: rgba(15, 23, 42, 0.55);
+  --lg-highlight: rgba(255, 255, 255, 0.2);
+  --lg-shadow-light: rgba(0, 0, 0, 0.3);
+}
+
+// Global Calendar Component
+.calendar-grid {
+  display: grid !important;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  gap: 1rem;
+  width: 100%;
+
+  // Fix for distorted columns: ensure items don't push tracks
+  >* {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.8rem;
+  }
+}
+
+.calendar-day-header {
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 0.8rem;
+  font-size: 1.2rem;
+
+  @media (max-width: 600px) {
+    font-size: 1rem;
+  }
+}
+
+.calendar-day {
+  padding: 0.8rem;
+  border-radius: 1.5rem;
+  min-height: 6rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+
+  &--has-trades {
+    cursor: pointer;
+  }
+
+  @media (max-width: 600px) {
+    min-height: 7rem;
+    padding: 0.8rem;
+  }
+}
+
+[data-theme="dark"][data-glass="clear"] {
+  --lg-bg-color: rgba(15, 23, 42, 0.05);
+  --lg-highlight: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] body {
+  background-color: var(--bg-dark);
+  background-image: linear-gradient(var(--grid-line-dark) 1px,
+      transparent 1px),
+    linear-gradient(90deg, var(--grid-line-dark) 1px, transparent 1px);
+  color: #f1f5f9;
+}
+
+// ═══════════════════════════════════════════════════════
+// GLASS EFFECTS
+// ═══════════════════════════════════════════════════════
+.glass-effect {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .glass-effect {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+// Reports row refinement
+[data-theme="dark"] .report-trade-row {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+// Liquid Mirror
+.lg-container {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 6px 12px var(--lg-shadow-light),
+    0 0 20px var(--lg-shadow-light);
+  border-radius: inherit;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+}
+
+.lg-filter {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  filter: url(#lg-dist);
+  -webkit-filter: url(#lg-dist);
+  isolation: isolate;
+  pointer-events: none;
+  transform: translateZ(0);
+}
+
+[data-glass="clear"] .lg-filter {
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+}
+
+.lg-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--lg-bg-color);
+  pointer-events: none;
+}
+
+.lg-specular {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  overflow: hidden;
+  box-shadow: inset 1px 1px 0 var(--lg-highlight),
+    inset 0 0 5px var(--lg-highlight);
+  pointer-events: none;
+}
+
+.lg-content {
+  position: relative;
+  z-index: 3;
+}
+
+// ═══════════════════════════════════════════════════════
+// VIEW-SPECIFIC STYLES
+// ═══════════════════════════════════════════════════════
+
+// Auth pages (Login + ForgotPassword)
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+
+  .auth-card {
+    width: 100%;
+    max-width: 450px;
+  }
+
+  .auth-paper {
+    padding: 40px;
+    border-radius: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .auth-logo-container {
+    z-index: 9999;
+    position: relative;
+  }
+
+  .auth-logo {
+    height: 60px;
+    object-fit: contain;
+    display: block;
+  }
+
+  .auth-title {
+    margin-top: 16px;
+    margin-bottom: 8px;
+    font-weight: bold;
+    font-family: "Oleo Script", cursive;
+  }
+
+  .auth-subtitle {
+    margin-bottom: 32px;
+  }
+
+  .auth-form {
+    width: 100%;
+  }
+
+  .auth-submit-btn {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    font-weight: bold;
+    border-radius: 30px;
+    box-shadow: 0 8px 16px rgba(33, 150, 243, 0.3);
+  }
+
+  .auth-link {
+    text-decoration: none;
+    font-weight: 600;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .auth-forgot-password-card {
+    max-width: 420px;
+  }
+
+  .otp-input {
+    letter-spacing: 8px;
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+}
+
+// Dashboard
+.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+
+  .broker-selector {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+
+  .chart-container {
+    height: 400px;
+    width: 100%;
+  }
+
+  .chart-empty {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .calendar-day--has-trades {
+    cursor: pointer;
+    opacity: 1;
+  }
+
+  .calendar-day--no-trades {
+    cursor: default;
+    opacity: 0.6;
+  }
+
+  .hover-bubble {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-weight: bold;
+    white-space: nowrap;
+    z-index: 20;
+    color: white;
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+    }
+  }
+
+  .hover-bubble--positive {
+    background-color: #4caf50;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+
+    &::after {
+      border-top-color: #4caf50;
+    }
+  }
+
+  .hover-bubble--negative {
+    background-color: #f44336;
+    box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4);
+
+    &::after {
+      border-top-color: #f44336;
+    }
+  }
+
+  .stats-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+  }
+
+  .stat-card {
+    padding: 16px;
+    border-radius: 30px;
+  }
+}
+
+// Import page
+.import-page {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 48px;
+
+  .import-left {
+    flex: 1 1 40%;
+    min-width: 300px;
+  }
+
+  .import-right {
+    flex: 1 1 50%;
+    min-width: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .drop-zone {
+    padding: 48px;
+    text-align: center;
+    border-radius: 30px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s;
+
+    &.drop-zone--hovered {
+      border: 2px dashed #2196f3;
+    }
+
+    &.drop-zone--default {
+      border: 2px dashed rgba(150, 150, 150, 0.3);
+    }
+  }
+
+  .csv-icon-box {
+    border-radius: 15px;
+    padding: 24px;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 16px rgba(76, 175, 80, 0.4);
+  }
+
+  .processing-state {
+    text-align: center;
+  }
+}
+
+// Journal page
+.journal-page {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  max-width: 900px;
+  margin: 0 auto;
+
+  .journal-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .journal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .journal-form-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .journal-submit-row {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .journal-entry-card {
+    padding: 24px;
+  }
+
+  .journal-entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+}
+
+// Reports page
+.reports-page {
+  .report-header-row {
+    display: flex;
+    padding: 8px 16px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid rgba(150, 150, 150, 0.2);
+    padding-bottom: 16px;
+  }
+
+  .report-trade-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .report-trade-row {
+    display: flex;
+    align-items: center;
+    padding: 16px 24px;
+    border-radius: 20px;
+    backdrop-filter: blur(5px);
+    transition: transform 0.2s, box-shadow 0.2s;
+
+    &:hover {
+      transform: translateX(4px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 16px;
+    }
+  }
+
+  .report-symbol-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+  }
+}
+
+// Settings page
+.settings-page {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+// Funded / PropDashboard page
+.funded-page {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+
+  .funded-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .funded-setup-center {
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+  }
+
+  .funded-setup-card {
+    padding: 40px;
+    border-radius: 30px;
+    text-align: center;
+    max-width: 500px;
+  }
+
+  .progress-bar-container {
+    margin-bottom: 24px;
+    width: 100%;
+  }
+
+  .progress-bar-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .progress-bar-track {
+    width: 100%;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    min-width: 10px;
+  }
+
+  .consistency-rule-box {
+    margin-top: 16px;
+    padding: 16px;
+    border-radius: 30px;
+    border: 1px solid rgba(156, 39, 176, 0.2);
+    background: rgba(156, 39, 176, 0.05);
+  }
+
+  .account-stats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
+// Layout navigation dock
+.layout-nav-dock {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 95vw;
+
+  @media (max-width: 599px) {
+    bottom: 32px;
+  }
+
+  @media (min-width: 600px) {
+    top: 24px;
+  }
+}

@@ -12,8 +12,8 @@ import {
     AutoGraph as AutoGraphIcon,
     Logout
 } from '@mui/icons-material';
-import { useThemeContext } from '../context/ThemeContext';
-import { useAuth } from '../context/AuthContext';
+import { useThemeContext } from '../context/ThemeContextType';
+import { useAuth } from '../context/AuthContextType';
 
 import { useState } from 'react';
 
