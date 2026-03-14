@@ -30,7 +30,7 @@ const Settings = () => {
                         {/* Theme Toggle */}
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Box>
-                                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Theme Mode</Typography>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Theme Mode</Typography>
                                 <Typography variant="body2" color="text.secondary">Toggle between light and dark mode</Typography>
                             </Box>
                             <FormControlLabel
@@ -43,7 +43,7 @@ const Settings = () => {
                         {/* Liquid Glass Toggle */}
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                             <Box>
-                                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Liquid Glass Style</Typography>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Liquid Glass Style</Typography>
                                 <Typography variant="body2" color="text.secondary">Choose the appearance of floating UI elements</Typography>
                             </Box>
 

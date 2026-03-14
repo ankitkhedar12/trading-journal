@@ -21,7 +21,7 @@ const FloatingCard: React.FC<FloatingCardProps> = ({ children, delay = 0, sx = {
             p: { xs: 2.5, sm: 4, md: 5 },
             borderRadius: { xs: '30px', md: '40px' },
             position: 'relative',
-            overflow: 'hidden',
+            overflow: 'visible',
             height: '100%',
             ...sx
         }}

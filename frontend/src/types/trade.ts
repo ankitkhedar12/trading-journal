@@ -11,6 +11,7 @@ export interface Trade {
     closedAt: string;
     orderId: string;
     status: string;
+    side?: 'Long' | 'Short';
     broker: string;
 }
 
@@ -28,43 +29,21 @@ export interface DashboardStats {
     };
 }
 
-export interface PropAccount {
-    id: string;
-    firmName: string;
-    accountType: string;
-    accountSize: number;
-    status: string;
+export interface DayTradesModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    date: Date | null;
+    trades: Trade[];
 }
 
-export interface PropRuleValue {
-    current: number;
-    limit: number;
-    isActive?: boolean;
-    currentPct?: number;
-    limitPct?: number;
+export interface TradeWithViolation extends Trade {
+    isViolation: boolean;
+    violationType?: string;
 }
 
-export interface PropDashboardData {
-    account: PropAccount;
-    violationMessage: string | null;
-    metrics: {
-        currentBalance: number;
-        totalPnl: number;
-        pnlPct: number;
-        winRate: string;
-        tradingDays: number;
-        totalTrades: number;
-        totalWinDays: number;
-        totalLossDays: number;
-    };
-    rules: {
-        dailyDrawdown: PropRuleValue;
-        maxDrawdown: PropRuleValue;
-        profitTarget: PropRuleValue;
-        consistency: PropRuleValue;
-        minDays: PropRuleValue;
-        maxRisk: PropRuleValue;
-    };
-    chartData: { date: string; value: number }[];
-    profitCalendar: { date: string; pnl: number; tradesCount: number }[];
+export interface TradeItemProps {
+    trade: Trade;
+    index: number;
+    isViolation?: boolean;
+    violationType?: string;
 }

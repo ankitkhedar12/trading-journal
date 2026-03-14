@@ -86,6 +86,15 @@ export default UserList;
 
 ---
 
+## Modularity & Organization
+
+- **Extract complex sub-elements**: If a component contains complex sub-rendering (e.g., custom tooltips, chart dots, or repeated UI blocks like progress bars), extract them into their own files.
+- **Centralize Business Logic**: Move complex calculations, data transformations, and validation logic from components into utility files (`src/utils/`).
+- **Externalize Types**: Do not define interfaces locally within component files. Move them to appropriate files in `src/types/` (e.g., `trade.ts`, `account.ts`) to ensure reusability and consistency.
+- **Atomic Components**: Reusable UI elements (like a `ProgressBar` or `StatusBadge`) should live in `src/components/common/` rather than being defined as local helper functions inside a view.
+
+---
+
 ## Imports & Path Aliases
 
 Use path aliases for all imports beyond one directory level. Never use deep relative paths like `../../../`.

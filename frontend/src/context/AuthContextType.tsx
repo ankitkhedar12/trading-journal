@@ -6,7 +6,9 @@ import { createContext, useContext } from 'react';
 export interface AuthContextType {
   isAuthenticated: boolean;
   user: { email: string; token: string } | null;
-  login: (email: string, pass: string) => Promise<boolean>;
+  login: (email: string, pass: string) => Promise<{ success: boolean; message?: string }>;
+  signup: (email: string, pass: string) => Promise<{ success: boolean; message?: string; requiresVerification?: boolean }>;
+  verifySignup: (email: string, code: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
 }
 

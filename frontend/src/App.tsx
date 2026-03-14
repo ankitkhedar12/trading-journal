@@ -4,6 +4,7 @@ import Dashboard from './views/dashboard/Dashboard';
 import PropDashboard from './views/funded/PropDashboard';
 import ImportData from './views/import/ImportData';
 import Login from './views/auth/Login';
+import Signup from './views/auth/Signup';
 import ForgotPassword from './views/auth/ForgotPassword';
 import Journal from './views/journal/Journal';
 import Reports from './views/reports/Reports';
@@ -15,6 +16,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
 
         <Route path="/" element={<ProtectedRoute />}>

@@ -39,10 +39,10 @@ const Login = () => {
         setIsSubmitting(true);
 
         const cleanEmail = sanitizeEmail(data.email);
-        const success = await login(cleanEmail, data.password);
+        const result = await login(cleanEmail, data.password);
 
-        if (!success) {
-            setServerError('Invalid email or password');
+        if (!result.success) {
+            setServerError(result.message || 'Invalid email or password');
         }
         setIsSubmitting(false);
     };
@@ -121,15 +121,32 @@ const Login = () => {
                             {isSubmitting ? 'Signing in...' : 'Sign In'}
                         </Button>
 
-                        <Box sx={{ textAlign: 'center', mt: 2 }}>
+                        <Box sx={{ textAlign: 'center', mt: 3 }}>
                             <Typography
                                 component={Link}
                                 to="/forgot-password"
                                 variant="body2"
                                 className="auth-link"
-                                sx={{ color: 'primary.main' }}
+                                sx={{ color: 'primary.main', display: 'block', mb: 1, textDecoration: 'none' }}
                             >
                                 Forgot Password?
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                Don't have an account?{' '}
+                                <Typography
+                                    component={Link}
+                                    to="/signup"
+                                    variant="body2"
+                                    className="auth-link"
+                                    sx={{ 
+                                        color: 'primary.main', 
+                                        fontWeight: 600,
+                                        textDecoration: 'none',
+                                        '&:hover': { textDecoration: 'underline' }
+                                    }}
+                                >
+                                    Sign Up
+                                </Typography>
                             </Typography>
                         </Box>
                     </Box>

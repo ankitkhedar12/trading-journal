@@ -9,17 +9,17 @@ import { getBaseUrl } from '../../utils/config';
 import { useInvalidateTrades } from '../../hooks/useTradeQueries';
 import { validateFile, getSecureHeaders } from '../../utils/security';
 
-type BrokerType = 'vantage' | 'the_funded_room';
+import { BROKERS } from '../../constants/common';
 
-const BROKER_LABELS: Record<BrokerType, string> = {
-    vantage: 'Vantage',
-    the_funded_room: 'The Funded Room',
+const BROKER_LABELS: Record<string, string> = {
+    [BROKERS.VANTAGE]: 'Vantage',
+    [BROKERS.THE_FUNDED_ROOM]: 'The Funded Room',
 };
 
 const ImportData = () => {
     const [isHovered, setIsHovered] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [selectedBroker, setSelectedBroker] = useState<BrokerType>('vantage');
+    const [selectedBroker, setSelectedBroker] = useState<string>(BROKERS.VANTAGE);
     const [fileError, setFileError] = useState<string | null>(null);
     const dropControls = useAnimation();
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -48,7 +48,8 @@ const ImportData = () => {
                 openedAt: get('Opened') || get('OpenTime') || get('Time'),
                 closedAt: get('Closed') || get('CloseTime') || get('Time'),
                 orderId: get('Order') || get('Ticket') || get('Position'),
-                status: get('Status') || 'Closed'
+                status: get('Status') || 'Closed',
+                side: get('Symbol').toUpperCase().startsWith('S') ? 'Short' : 'Long'
             };
         }).filter(t => t && t.orderId && t.openedAt);
     };
@@ -100,7 +101,8 @@ const ImportData = () => {
                 openedAt: isoDate,
                 closedAt: isoDate,
                 orderId,
-                status: 'Closed'
+                status: 'Closed',
+                side: get('SIDE').toUpperCase() === 'SHORT' ? 'Short' : 'Long'
             };
         }).filter(t => t && t.orderId && t.openedAt);
     };
@@ -152,7 +154,7 @@ const ImportData = () => {
                                 return;
                             }
 
-                            const formattedTrades = selectedBroker === 'vantage'
+                            const formattedTrades = selectedBroker === BROKERS.VANTAGE
                                 ? parseVantageTrades(rawData)
                                 : parseFundedRoomTrades(rawData);
 
@@ -255,7 +257,7 @@ const ImportData = () => {
                             },
                         }}
                     >
-                        {(Object.keys(BROKER_LABELS) as BrokerType[]).map(key => (
+                        {Object.keys(BROKER_LABELS).map(key => (
                             <ToggleButton key={key} value={key}>
                                 {BROKER_LABELS[key]}
                             </ToggleButton>
@@ -285,11 +287,11 @@ const ImportData = () => {
                             whileHover={{ y: -10 }}
                             style={{ display: 'inline-block' }}
                         >
-                            <Box sx={{ 
-                                bgcolor: 'success.main', 
-                                p: 3, 
-                                borderRadius: '20px', 
-                                color: 'white', 
+                            <Box sx={{
+                                bgcolor: 'success.main',
+                                p: 3,
+                                borderRadius: '20px',
+                                color: 'white',
                                 mb: 2,
                                 display: 'inline-flex',
                                 flexDirection: 'column',

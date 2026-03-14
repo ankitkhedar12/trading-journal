@@ -1,41 +1,43 @@
-import { Box, Typography, Paper, CircularProgress, Button, Grid, Chip, IconButton, useTheme, Alert } from '@mui/material';
-import { motion, AnimatePresence } from 'framer-motion';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip as RechartsTooltip, ReferenceLine } from 'recharts';
-import { useState, useEffect } from 'react';
+import { Box, Typography, CircularProgress, Button, Grid, Chip, Alert } from '@mui/material';
+import { AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContextType';
 import { getBaseUrl } from '../../utils/config';
-import { usePropDashboard, useInvalidateTrades } from '../../hooks/useTradeQueries';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, subMonths, addMonths } from 'date-fns';
-import { CalendarMonth, Add, Warning, ShowChart, Security, Gavel, ChevronLeft, ChevronRight } from '@mui/icons-material';
+import { usePropDashboard, useInvalidateTrades, useAllTrades } from '../../hooks/useTradeQueries';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import { ShowChart } from '@mui/icons-material';
 import { getSecureHeaders } from '../../utils/security';
+import { BROKERS, ACCOUNT_TYPES, ACCOUNT_STATUS } from '../../constants/common';
+import { formatCalendarData, getBrokerKeyFromFirmName } from '../../utils/tradeUtils';
 
-import FloatingCard from './components/FloatingCard';
-import SetupAccountDialog from './components/SetupAccountDialog';
+import FloatingCard from '../../components/common/FloatingCard';
+import ProfitCalendar from '../../components/common/ProfitCalendar';
+import EquityChart from '../../components/charts/EquityChart';
+import DayTradesModal from '../../components/common/DayTradesModal';
 import EditAccountDialog from './components/EditAccountDialog';
-
-interface ProfitCalendarEntry {
-    date: string;
-    pnl: number;
-    tradesCount: number;
-}
-
-const MotionPaper = motion(Paper);
+import AccountSetupCenter from './components/AccountSetupCenter';
+import ObjectiveRules from './components/ObjectiveRules';
+import AccountMatrix from './components/AccountMatrix';
 
 const PropDashboard = () => {
     const { user } = useAuth();
-    const theme = useTheme();
     const invalidateTrades = useInvalidateTrades();
     const [openSetup, setOpenSetup] = useState(false);
     const [openEdit, setOpenEdit] = useState(false);
     const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
     // Form State
-    const [firmName, setFirmName] = useState('The Funded Room');
-    const [accountType, setAccountType] = useState('1_STEP');
-    const [accountSize, setAccountSize] = useState(100000);
-    const [status, setStatus] = useState('PHASE_1');
+    const [firmName, setFirmName] = useState<string>(BROKERS.THE_FUNDED_ROOM);
+    const [accountType, setAccountType] = useState<string>(ACCOUNT_TYPES.ONE_STEP);
+    const [accountSize, setAccountSize] = useState<number>(100000);
+    const [status, setStatus] = useState<string>(ACCOUNT_STATUS.PHASE_1);
+
+    // Day Selection State
+    const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+    const [showDayTrades, setShowDayTrades] = useState(false);
 
     const { data: dashboardData = null, isLoading } = usePropDashboard();
+    const { data: tradesList = [] } = useAllTrades();
 
     // Pre-fill form when data loads
     useEffect(() => {
@@ -50,8 +52,8 @@ const PropDashboard = () => {
 
     useEffect(() => {
         if (!dashboardData?.account) {
-            const defaultStatus = accountType === 'INSTANT' ? 'FUNDED' : 'PHASE_1';
-            if (status !== defaultStatus && status !== 'FAILED') {
+            const defaultStatus = accountType === ACCOUNT_TYPES.INSTANT ? ACCOUNT_STATUS.FUNDED : ACCOUNT_STATUS.PHASE_1;
+            if (status !== defaultStatus && status !== ACCOUNT_STATUS.FAILED) {
                 setStatus(defaultStatus);
             }
         }
@@ -105,6 +107,27 @@ const PropDashboard = () => {
         }
     };
 
+    const calendarData = useMemo(() => {
+        const firmName = dashboardData?.account?.firmName || '';
+        const brokerKey = getBrokerKeyFromFirmName(firmName);
+        const filteredTrades = tradesList.filter(t => t.broker === brokerKey);
+        return formatCalendarData(filteredTrades);
+    }, [tradesList, dashboardData?.account?.firmName]);
+
+    const monthStart = startOfMonth(currentDate);
+    const daysInMonth = eachDayOfInterval({ start: monthStart, end: endOfMonth(currentDate) });
+    let totalTradesThisMonth = 0;
+    daysInMonth.forEach(day => {
+        const dateStr = format(day, 'yyyy-MM-dd');
+        const tradeStats = calendarData[dateStr];
+        if (tradeStats) totalTradesThisMonth += tradeStats.count;
+    });
+
+    const handleDayClick = (date: Date) => {
+        setSelectedDay(date);
+        setShowDayTrades(true);
+    };
+
     if (isLoading) {
         return <Box sx={{ display: 'flex', justifyContent: 'center', p: 10 }}><CircularProgress /></Box>;
     }
@@ -112,91 +135,35 @@ const PropDashboard = () => {
     // --- SETUP VIEW ---
     if (!dashboardData?.account) {
         return (
-            <Box className="funded-page">
-                <Box className="funded-setup-center">
-                    <MotionPaper initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="funded-setup-card" elevation={4}>
-                        <Security sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
-                        <Typography variant="h4" gutterBottom fontWeight="bold">Prop Firm Tracker</Typography>
-                        <Typography color="text.secondary" mb={4}>
-                            Track your daily drawdown, profit targets, and consistency rules automatically using your imported trades.
-                        </Typography>
-                        <Button variant="contained" size="large" onClick={() => setOpenSetup(true)} startIcon={<Add />} sx={{ borderRadius: '10px !important', px: 4, py: 1.5 }}>
-                            Setup New Account
-                        </Button>
-                    </MotionPaper>
-
-                    <SetupAccountDialog
-                        open={openSetup}
-                        onClose={() => setOpenSetup(false)}
-                        firmName={firmName}
-                        setFirmName={setFirmName}
-                        accountType={accountType}
-                        setAccountType={setAccountType}
-                        accountSize={accountSize}
-                        setAccountSize={setAccountSize}
-                        status={status}
-                        setStatus={setStatus}
-                        onCreate={handleCreateAccount}
-                    />
-                </Box>
-            </Box>
+            <AccountSetupCenter 
+                openSetup={openSetup}
+                setOpenSetup={setOpenSetup}
+                firmName={firmName}
+                setFirmName={setFirmName}
+                accountType={accountType}
+                setAccountType={setAccountType}
+                accountSize={accountSize}
+                setAccountSize={setAccountSize}
+                status={status}
+                setStatus={setStatus}
+                onCreate={handleCreateAccount}
+            />
         );
     }
 
-    const { account, metrics, rules, chartData, profitCalendar, violationMessage } = dashboardData;
-    const isFailed = account.status === 'FAILED';
-
-    const monthStart = startOfMonth(currentDate);
-    const monthEnd = endOfMonth(currentDate);
-    const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
-    let totalTradesThisMonth = 0;
-    daysInMonth.forEach(day => {
-        const dateStr = format(day, 'yyyy-MM-dd');
-        const tradeStats = profitCalendar?.find((p: ProfitCalendarEntry) => p.date === dateStr);
-        if (tradeStats) totalTradesThisMonth += tradeStats.tradesCount;
-    });
-
-    const renderProgressBar = (label: string, current: number, max: number, isGood: boolean, isCurrency = true) => {
-        const pct = Math.min((current / max) * 100, 100);
-        const nearLimit = pct > 0 && !isGood ? pct > 85 : false;
-        let barColor = isGood ? theme.palette.success.main : theme.palette.warning.main;
-        if (nearLimit || (pct >= 100 && !isGood)) barColor = theme.palette.error.main;
-
-        return (
-            <Box className="progress-bar-container">
-                <Box className="progress-bar-header">
-                    <Typography variant="body2" color="text.secondary">{label}</Typography>
-                    <Typography variant="body2" fontWeight="bold" color={nearLimit ? 'error.main' : 'text.primary'}>
-                        {isCurrency ? `$${current.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : current} / {isCurrency ? `$${max.toLocaleString()}` : max} ({pct.toFixed(1)}%)
-                    </Typography>
-                </Box>
-                <Box className="progress-bar-track">
-                    <Box
-                        component={motion.div}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pct}%` }}
-                        transition={{ duration: 1, ease: "easeOut" }}
-                        className="progress-bar-fill"
-                        sx={{
-                            bgcolor: pct > 0 ? barColor : 'transparent',
-                            boxShadow: pct > 0 ? `0 0 15px ${barColor}66` : 'none',
-                        }}
-                    />
-                </Box>
-            </Box>
-        );
-    };
+    const { account, metrics, rules, chartData, violationMessage } = dashboardData;
+    const isFailed = account.status === ACCOUNT_STATUS.FAILED;
 
     return (
         <Box className="funded-page">
             {/* Violation Alerts */}
             <AnimatePresence>
                 {(isFailed || violationMessage) && (
-                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
+                    <Box component="div">
                         <Alert severity="error" variant="filled" sx={{ borderRadius: '30px', mb: 2, fontWeight: 'bold', fontSize: '1.1rem' }} action={<Button color="inherit" size="small" onClick={() => setOpenEdit(true)}>FIX / OVERRIDE</Button>}>
                             ACCOUNT FAILED: {violationMessage || "A rule has been violated. The account is marked as Failed."}
                         </Alert>
-                    </motion.div>
+                    </Box>
                 )}
             </AnimatePresence>
 
@@ -232,126 +199,40 @@ const PropDashboard = () => {
                             </Box>
                         </Box>
                         <Box sx={{ height: 350 }}>
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(150, 150, 150, 0.1)" />
-                                    <XAxis dataKey="date" tick={{ fill: '#888', fontSize: 12 }} axisLine={false} tickLine={false} />
-                                    <YAxis domain={['auto', 'auto']} tickFormatter={(val) => `$${val.toLocaleString()}`} tick={{ fill: '#888', fontSize: 12 }} axisLine={false} tickLine={false} />
-                                    <RechartsTooltip
-                                        contentStyle={{ borderRadius: '15px', border: 'none', background: theme.palette.mode === 'dark' ? '#1e293b' : '#fff', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}
-                                        itemStyle={{ color: '#9c27b0', fontWeight: 'bold' }}
-                                    />
-                                    <ReferenceLine y={account.accountSize} stroke="rgba(150,150,150,0.4)" strokeDasharray="5 5" label={{ value: 'INITIAL', position: 'right', fill: '#888', fontSize: 10 }} />
-                                    <Line type="monotone" dataKey="value" stroke="#9c27b0" strokeWidth={4} dot={false} activeDot={{ r: 6, strokeWidth: 0 }} />
-                                </LineChart>
-                            </ResponsiveContainer>
+                            <EquityChart
+                                data={chartData}
+                                dataKey="value"
+                                strokeColor="#9c27b0"
+                                referenceLineValue={account.accountSize}
+                                referenceLineLabel="INITIAL"
+                            />
                         </Box>
                     </FloatingCard>
                 </Grid>
 
                 <Grid size={{ xs: 12, lg: 3 }} sx={{ display: 'flex' }}>
-                    <FloatingCard delay={0.1} sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', width: '100%' }}>
-                        <Typography variant="h6" mb={4} display="flex" alignItems="center"><Gavel sx={{ mr: 1 }} /> Objective Rules</Typography>
-                        <Box sx={{ flex: 1 }}>
-                            {renderProgressBar("Daily Drawdown (Static)", rules.dailyDrawdown.current, rules.dailyDrawdown.limit, false)}
-                            {renderProgressBar("Max Total Drawdown", rules.maxDrawdown.current, rules.maxDrawdown.limit, false)}
-                            {rules.profitTarget?.isActive && renderProgressBar("Profit Target", rules.profitTarget.current, rules.profitTarget.limit, true)}
-                            {rules.minDays?.limit > 0 && renderProgressBar("Min Trading Days", rules.minDays.current, rules.minDays.limit, true, false)}
-                            {rules.maxRisk?.isActive && renderProgressBar("Max 3% Aggregated Risk", rules.maxRisk.currentPct ?? 0, 100, false, false)}
-
-                            {rules.consistency?.isActive && (
-                                <Box className="consistency-rule-box">
-                                    <Typography variant="caption" color="secondary.main" display="flex" alignItems="center" fontWeight="bold">
-                                        <Warning sx={{ fontSize: 16, mr: 0.5 }} /> Consistency Rule (15%)
-                                    </Typography>
-                                    <Typography variant="body1" sx={{ mt: 1, fontWeight: 'bold', color: (rules.consistency.currentPct ?? 0) > 15 ? 'error.main' : 'text.primary' }}>
-                                        Best Day: {(rules.consistency.currentPct ?? 0).toFixed(1)}% of TP
-                                    </Typography>
-                                </Box>
-                            )}
-                        </Box>
-                    </FloatingCard>
+                    <ObjectiveRules rules={rules} />
                 </Grid>
 
                 {/* Calendar and Stats */}
                 <Grid size={{ xs: 12, lg: 9 }} sx={{ display: 'flex' }}>
                     <FloatingCard delay={0.3} sx={{ flexGrow: 1, width: '100%' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <CalendarMonth sx={{ mr: 1, color: 'primary.main' }} />
-                                <Typography variant="h5">Trading Session Calendar</Typography>
-                            </Box>
-                            <Box sx={{ display: 'flex', gap: 1 }}>
-                                <IconButton size="small" onClick={() => setCurrentDate(subMonths(currentDate, 1))}><ChevronLeft /></IconButton>
-                                <Typography variant="body1" sx={{ minWidth: 120, textAlign: 'center', alignSelf: 'center' }}>{format(currentDate, 'MMMM yyyy')}</Typography>
-                                <IconButton size="small" onClick={() => setCurrentDate(addMonths(currentDate, 1))}><ChevronRight /></IconButton>
-                            </Box>
-                        </Box>
-                        <Box className="calendar-grid">
-                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => <Box key={day} className="calendar-day-header" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>{day}</Box>)}
-                            {Array.from({ length: monthStart.getDay() }).map((_, i) => <Box key={`empty-${i}`} />)}
-                            {daysInMonth.map((day, i) => {
-                                const dateStr = format(day, 'yyyy-MM-dd');
-                                const tradeStats = profitCalendar.find((p: ProfitCalendarEntry) => p.date === dateStr);
-                                const hasTrades = !!tradeStats;
-                                const pnl = tradeStats ? tradeStats.pnl : 0;
-                                const count = tradeStats ? tradeStats.tradesCount : 0;
-                                const isPositive = pnl > 0;
-                                return (
-                                    <Paper key={i} elevation={hasTrades ? 4 : 1}
-                                        className={`calendar-day ${hasTrades ? 'calendar-day--has-trades' : 'calendar-day--no-trades'}`}
-                                        sx={{
-                                            bgcolor: hasTrades ? (isPositive ? 'success.main' : 'error.main') : 'background.paper',
-                                            color: hasTrades ? 'white' : 'text.disabled',
-                                            borderColor: hasTrades ? (isPositive ? 'success.dark' : 'error.dark') : 'divider',
-                                            '&:hover': hasTrades ? { transform: 'scale(1.04) translateY(-4px)', zIndex: 10, boxShadow: '0 4px 15px rgba(0,0,0,0.1)' } : {}
-                                        }}
-                                    >
-                                        <Typography variant="caption" sx={{ fontWeight: 'bold' }}>{format(day, 'MMM d')}</Typography>
-                                        {hasTrades && (
-                                            <Box>
-                                                <Typography
-                                                    sx={{
-                                                        fontWeight: 'bold',
-                                                        color: 'white',
-                                                        whiteSpace: 'nowrap',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        fontSize: '1rem'
-                                                    }}
-                                                >
-                                                    {pnl >= 0 ? '+' : '-'}${Math.abs(pnl).toFixed(2)}
-                                                </Typography>
-                                                <Typography variant="caption" sx={{ opacity: 0.85, fontSize: '0.65rem', display: 'block', mt: -0.2 }}>
-                                                    {count} Trades
-                                                </Typography>
-                                            </Box>
-                                        )}
-                                    </Paper>
-                                );
-                            })}
-                        </Box>
+                        <ProfitCalendar
+                            currentDate={currentDate}
+                            onDateChange={setCurrentDate}
+                            data={calendarData}
+                            title="Trading Session Calendar"
+                            onDayClick={handleDayClick}
+                        />
                     </FloatingCard>
                 </Grid>
 
                 <Grid size={{ xs: 12, lg: 3 }} sx={{ display: 'flex' }}>
-                    <FloatingCard delay={0.4} sx={{ flexGrow: 1, width: '100%' }}>
-                        <Typography variant="h6" mb={3}>Account Matrix</Typography>
-                        <Box className="account-stats-list">
-                            {[
-                                { label: 'Current P&L', val: `${metrics.totalPnl >= 0 ? '+' : ''}$${Math.abs(metrics.totalPnl).toFixed(2)}`, color: metrics.totalPnl >= 0 ? 'success.main' : 'error.main', bg: metrics.totalPnl >= 0 ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)' },
-                                { label: `Trades (${format(currentDate, 'MMM')})`, val: totalTradesThisMonth, color: 'info.main', bg: 'rgba(33, 150, 243, 0.1)' },
-                                { label: 'Win Rate', val: metrics.winRate, color: 'success.main', bg: 'rgba(76, 175, 80, 0.1)' },
-                                { label: 'Win/Loss Days', val: `${metrics.totalWinDays}W / ${metrics.totalLossDays}L`, color: 'text.primary', bg: 'rgba(255, 255, 255, 0.03)' },
-                                { label: 'Trading Days', val: metrics.tradingDays, color: 'primary.main', bg: 'rgba(156, 39, 176, 0.1)' },
-                            ].map((stat, i) => (
-                                <Paper key={i} sx={{ p: 2, borderRadius: '30px', bgcolor: stat.bg, border: 'none' }}>
-                                    <Typography variant="caption" color="text.secondary">{stat.label}</Typography>
-                                    <Typography variant="h5" color={stat.color} fontWeight="bold">{stat.val}</Typography>
-                                </Paper>
-                            ))}
-                        </Box>
-                    </FloatingCard>
+                    <AccountMatrix 
+                        metrics={metrics}
+                        currentDate={currentDate}
+                        totalTradesThisMonth={totalTradesThisMonth}
+                    />
                 </Grid>
             </Grid>
 
@@ -364,6 +245,16 @@ const PropDashboard = () => {
                 status={status}
                 setStatus={setStatus}
                 onUpdate={handleUpdateAccount}
+            />
+            <DayTradesModal
+                isOpen={showDayTrades}
+                onClose={() => setShowDayTrades(false)}
+                date={selectedDay}
+                trades={tradesList.filter(t => {
+                    const firm = dashboardData?.account?.firmName || '';
+                    const bKey = getBrokerKeyFromFirmName(firm);
+                    return t.broker === bKey;
+                })}
             />
         </Box>
     );

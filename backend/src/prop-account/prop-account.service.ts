@@ -50,8 +50,7 @@ export class PropAccountService {
         allTrades.forEach(trade => {
             currentBalance += trade.pnl;
 
-            const adjustedTime = new Date(trade.closedAt.getTime() - 2 * 60 * 60 * 1000); // subtract 2 hrs for 2AM cutoff
-            const dayStr = adjustedTime.toISOString().split('T')[0];
+            const dayStr = trade.openedAt.toISOString().split('T')[0];
 
             if (!tradesByDay[dayStr]) tradesByDay[dayStr] = [];
             tradesByDay[dayStr].push(trade);
@@ -116,8 +115,8 @@ export class PropAccountService {
         // Calculate balance at start of today for drawdown check
         let balanceAtStartOfToday = initialBalance;
         allTrades.forEach(trade => {
-            const adjustedTime = new Date(trade.closedAt.getTime() - 2 * 60 * 60 * 1000);
-            if (adjustedTime.toISOString().split('T')[0] < todayStartStr) {
+            const dayStr = trade.openedAt.toISOString().split('T')[0];
+            if (dayStr < todayStartStr) {
                 balanceAtStartOfToday += trade.pnl;
             }
         });
@@ -191,11 +190,18 @@ export class PropAccountService {
             return { date: dayStr, pnl: parseFloat(pnl.toFixed(2)), tradesCount: tradesByDay[dayStr].length };
         });
 
-        const chartData: { date: string, value: number }[] = [];
+        const chartData: { date: string, value: number, symbol: string, tradePnl: number, fullDate: string, index: number }[] = [];
         let runningEq = initialBalance;
-        allTrades.forEach(trade => {
+        allTrades.forEach((trade, index) => {
             runningEq += trade.pnl;
-            chartData.push({ date: trade.closedAt.toLocaleDateString(), value: parseFloat(runningEq.toFixed(2)) });
+            chartData.push({ 
+                index,
+                date: trade.closedAt.toLocaleDateString(), 
+                fullDate: trade.closedAt.toLocaleString(),
+                symbol: trade.symbol,
+                tradePnl: trade.pnl,
+                value: parseFloat(runningEq.toFixed(2)) 
+            });
         });
 
         return {

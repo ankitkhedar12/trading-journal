@@ -1,22 +1,10 @@
 import React from 'react';
-import { 
-    Dialog, DialogTitle, DialogContent, TextField, MenuItem, 
-    DialogActions, Button 
+import {
+    Dialog, DialogTitle, DialogContent, TextField, MenuItem,
+    DialogActions, Button
 } from '@mui/material';
 
-interface SetupAccountDialogProps {
-    open: boolean;
-    onClose: () => void;
-    firmName: string;
-    setFirmName: (val: string) => void;
-    accountType: string;
-    setAccountType: (val: string) => void;
-    accountSize: number;
-    setAccountSize: (val: number) => void;
-    status: string;
-    setStatus: (val: string) => void;
-    onCreate: () => void;
-}
+import type { SetupAccountDialogProps } from '../../../types/account';
 
 const SetupAccountDialog: React.FC<SetupAccountDialogProps> = ({
     open,
@@ -33,7 +21,7 @@ const SetupAccountDialog: React.FC<SetupAccountDialogProps> = ({
 }) => {
     return (
         <Dialog open={open} onClose={onClose} PaperProps={{ sx: { borderRadius: '15px', minWidth: 400 } }}>
-            <DialogTitle>Setup Prop Account</DialogTitle>
+            <DialogTitle sx={{ fontWeight: 'bold', fontSize: '2rem !important' }}>Setup Prop Account</DialogTitle>
             <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
                 <TextField select label="Firm Name" value={firmName} onChange={(e) => setFirmName(e.target.value)} fullWidth>
                     <MenuItem value="The Funded Room">The Funded Room</MenuItem>

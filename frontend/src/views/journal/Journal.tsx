@@ -1,5 +1,4 @@
 import { Box, Typography, Paper, TextField, Button, Avatar, Chip, CircularProgress } from '@mui/material';
-import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { AutoAwesome, Send } from '@mui/icons-material';
@@ -11,7 +10,7 @@ import { journalEntrySchema } from '../../utils/validators';
 import type { JournalEntryFormData } from '../../utils/validators';
 import { sanitizeInput, sanitizeHtml, getSecureHeaders } from '../../utils/security';
 
-const MotionPaper = motion(Paper);
+import FloatingCard from '../../components/common/FloatingCard';
 
 interface JournalEntry {
     id: string;
@@ -21,18 +20,7 @@ interface JournalEntry {
     tags: string[];
 }
 
-const FloatingCard = ({ children, delay = 0, sx = {} }: { children: React.ReactNode, delay?: number, sx?: React.CSSProperties & Record<string, unknown> }) => (
-    <MotionPaper
-        className="glass-effect"
-        initial={{ y: 50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay }}
-        whileHover={{ scale: 1.01, zIndex: 10, transition: { duration: 0.3, ease: 'easeOut' } }}
-        sx={{ p: 4, borderRadius: '30px', position: 'relative', overflow: 'hidden', ...sx }}
-    >
-        {children}
-    </MotionPaper>
-);
+
 
 const Journal = () => {
     const { user } = useAuth();

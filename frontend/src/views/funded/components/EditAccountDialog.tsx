@@ -1,20 +1,11 @@
 import React from 'react';
-import { 
-    Dialog, DialogTitle, DialogContent, Box, Typography, 
-    TextField, MenuItem, DialogActions, Button 
+import {
+    Dialog, DialogTitle, DialogContent, Box, Typography,
+    TextField, MenuItem, DialogActions, Button
 } from '@mui/material';
 import { Warning } from '@mui/icons-material';
 
-interface EditAccountDialogProps {
-    open: boolean;
-    onClose: () => void;
-    firmName: string;
-    accountType: string;
-    accountSize: number;
-    status: string;
-    setStatus: (status: string) => void;
-    onUpdate: () => void;
-}
+import type { EditAccountDialogProps } from '../../../types/account';
 
 const EditAccountDialog: React.FC<EditAccountDialogProps> = ({
     open,
@@ -27,20 +18,20 @@ const EditAccountDialog: React.FC<EditAccountDialogProps> = ({
     onUpdate
 }) => {
     return (
-        <Dialog 
-            open={open} 
-            onClose={onClose} 
+        <Dialog
+            open={open}
+            onClose={onClose}
             PaperProps={{ sx: { borderRadius: '30px', minWidth: 450 } }}
         >
             <DialogTitle sx={{ fontWeight: 'bold', fontSize: '2rem !important' }}>
                 Edit Prop Account Settings
             </DialogTitle>
             <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
-                <Box sx={{ 
-                    p: 2, 
-                    bgcolor: 'rgba(244, 67, 54, 0.1)', 
-                    borderRadius: '15px', 
-                    border: '1px solid rgba(244, 67, 54, 0.3)' 
+                <Box sx={{
+                    p: 2,
+                    bgcolor: 'rgba(244, 67, 54, 0.1)',
+                    borderRadius: '15px',
+                    border: '1px solid rgba(244, 67, 54, 0.3)'
                 }}>
                     <Typography variant="body2" color="error.main" fontWeight="bold" display="flex" alignItems="center">
                         <Warning sx={{ fontSize: 18, mr: 1 }} /> TRADE RESET WARNING
@@ -74,10 +65,10 @@ const EditAccountDialog: React.FC<EditAccountDialogProps> = ({
             </DialogContent>
             <DialogActions sx={{ p: 3 }}>
                 <Button onClick={onClose}>Cancel</Button>
-                <Button 
-                    variant="contained" 
-                    color="error" 
-                    onClick={onUpdate} 
+                <Button
+                    variant="contained"
+                    color="error"
+                    onClick={onUpdate}
                     sx={{ borderRadius: '10px !important', px: 3 }}
                 >
                     Reset & Update Status
