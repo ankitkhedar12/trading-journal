@@ -76,10 +76,10 @@ interface StoredAuth {
 }
 
 const AUTH_KEY = 'auth_session';
-const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 /**
- * Store auth data securely in sessionStorage with expiry.
+ * Store auth data securely in localStorage with expiry.
  */
 export const storeAuthSession = (email: string, token: string): void => {
   const session: StoredAuth = {
@@ -87,14 +87,14 @@ export const storeAuthSession = (email: string, token: string): void => {
     token,
     expiresAt: Date.now() + SESSION_DURATION,
   };
-  sessionStorage.setItem(AUTH_KEY, JSON.stringify(session));
+  localStorage.setItem(AUTH_KEY, JSON.stringify(session));
 };
 
 /**
  * Retrieve auth session, returns null if expired or missing.
  */
 export const getAuthSession = (): StoredAuth | null => {
-  const raw = sessionStorage.getItem(AUTH_KEY);
+  const raw = localStorage.getItem(AUTH_KEY);
   if (!raw) return null;
 
   try {
@@ -114,7 +114,7 @@ export const getAuthSession = (): StoredAuth | null => {
  * Clear auth session.
  */
 export const clearAuthSession = (): void => {
-  sessionStorage.removeItem(AUTH_KEY);
+  localStorage.removeItem(AUTH_KEY);
   // Also clear legacy localStorage keys
   localStorage.removeItem('auth');
   localStorage.removeItem('user');

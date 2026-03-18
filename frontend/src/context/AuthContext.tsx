@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const [user, setUser] = useState<{ email: string; token: string } | null>(() => {
-    // Check sessionStorage first
+    // Check local auth session first, fall back to legacy localStorage
     const session = getAuthSession();
     if (session) return { email: session.email, token: session.token };
     // Fall back to legacy localStorage
