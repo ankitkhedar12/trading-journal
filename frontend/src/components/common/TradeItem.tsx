@@ -25,6 +25,30 @@ const TradeItem: React.FC<TradeItemProps> = ({ trade, index, isViolation, violat
         return pnl > 0 ? 'rgba(76, 175, 80, 0.05)' : pnl < 0 ? 'rgba(211, 47, 47, 0.05)' : 'rgba(158, 158, 158, 0.03)';
     };
 
+    const formatDuration = (start: string, end: string) => {
+        const startTime = new Date(start).getTime();
+        const endTime = new Date(end).getTime();
+        
+        if (isNaN(startTime) || isNaN(endTime)) return '-';
+        
+        const ms = endTime - startTime;
+        if (ms < 0) return '0s';
+        if (ms < 1000 && ms > 0) return `${ms}ms`;
+        
+        const sec = Math.floor(ms / 1000);
+        if (sec < 60) return `${sec}s`;
+        
+        const min = Math.floor(sec / 60);
+        const remSec = sec % 60;
+        if (min < 60) return `${min}m ${remSec}s`;
+        
+        const hr = Math.floor(min / 60);
+        const remMin = min % 60;
+        return `${hr}h ${remMin}m`;
+    };
+
+    const duration = formatDuration(trade.openedAt, trade.closedAt);
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 15 }}
@@ -84,6 +108,10 @@ const TradeItem: React.FC<TradeItemProps> = ({ trade, index, isViolation, violat
 
                 <Typography variant="body2" sx={{ flex: 1, fontWeight: 'bold', color: getPnlColor(trade.pnl) }}>
                     {trade.pnl > 0 ? '+' : ''}{trade.pnl.toFixed(2)}
+                </Typography>
+
+                <Typography variant="body2" sx={{ flex: 1, color: 'text.secondary' }}>
+                    {duration}
                 </Typography>
 
                 <Typography variant="caption" sx={{ flex: 1.5, color: 'text.secondary', textAlign: 'right' }}>

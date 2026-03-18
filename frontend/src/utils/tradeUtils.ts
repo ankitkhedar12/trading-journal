@@ -32,13 +32,26 @@ export const detectTradeViolations = (trades: Trade[]): TradeWithViolation[] => 
 
         // 1. HFT Detection 
         const threeMins = 3 * 60 * 1000;
-        const hftGroup = all.filter(t =>
+        const sideTrades = all.filter(t =>
             t.symbol === trade.symbol &&
-            (t.side === side || (!t.side && side === 'Long')) &&
-            Math.abs(new Date(t.openedAt).getTime() - openTime) <= threeMins
+            (t.side === side || (!t.side && side === 'Long'))
         );
 
-        if (hftGroup.length >= 4) {
+        const isHFT = sideTrades.some(startTrade => {
+            const startTime = new Date(startTrade.openedAt).getTime();
+            // The 3-minute window starting at 'startTime' must include the current trade
+            if (openTime >= startTime && openTime <= startTime + threeMins) {
+                // Count how many trades fall into this specific 3-minute window
+                const tradesInWindow = sideTrades.filter(t => {
+                    const tTime = new Date(t.openedAt).getTime();
+                    return tTime >= startTime && tTime <= startTime + threeMins;
+                });
+                return tradesInWindow.length >= 4;
+            }
+            return false;
+        });
+
+        if (isHFT) {
             return {
                 ...trade,
                 isViolation: true,

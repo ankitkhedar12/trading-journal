@@ -124,6 +124,7 @@ const DayTradesModal: React.FC<DayTradesModalProps> = ({ isOpen, onClose, date, 
                                 <Typography variant="caption" sx={{ flex: 0.8 }}>LOTS</Typography>
                                 <Typography variant="caption" sx={{ flex: 1.5 }}>ENTRY &rarr; EXIT</Typography>
                                 <Typography variant="caption" sx={{ flex: 1 }}>PNL</Typography>
+                                <Typography variant="caption" sx={{ flex: 1 }}>DURATION</Typography>
                                 <Typography variant="caption" sx={{ flex: 1.5, textAlign: 'right' }}>TIME</Typography>
                             </Box>
 

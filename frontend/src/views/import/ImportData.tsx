@@ -64,7 +64,8 @@ const ImportData = () => {
                 return foundKey ? String(row[foundKey]).trim() : '';
             };
 
-            const closedRaw = get('CLOSED') || get('CLOSED↓');
+            const closedRaw = get('CLOSED');
+            const openedRaw = get('OPENED');
             const pair = get('PAIR').replace(/\//g, '');
             const lotSize = get('LOTSIZE') || get('LOT SIZE');
             const entryPrice = get('ENTRYPRICE') || get('ENTRY PRICE');
@@ -75,20 +76,30 @@ const ImportData = () => {
 
             if (!closedRaw || !pair) return null;
 
-            let isoDate = null;
+            let isoClosedDate = null;
+            let isoOpenedDate = null;
+
             try {
-                const cleanDateStr = closedRaw.replace(/GMT/g, '').replace(/,/g, '');
-                const d = new Date(cleanDateStr);
-                if (!isNaN(d.getTime())) {
-                    isoDate = d.toISOString();
+                const cleanClosedStr = closedRaw.replace(/GMT/g, '').replace(/,/g, '');
+                const dClosed = new Date(cleanClosedStr);
+                if (!isNaN(dClosed.getTime())) {
+                    isoClosedDate = dClosed.toISOString();
                 }
-            } catch {
-                // skip invalid dates
+            } catch {}
+
+            if (!isoClosedDate) return null;
+
+            if (openedRaw) {
+                try {
+                    const cleanOpenedStr = openedRaw.replace(/GMT/g, '').replace(/,/g, '');
+                    const dOpened = new Date(cleanOpenedStr);
+                    if (!isNaN(dOpened.getTime())) {
+                        isoOpenedDate = dOpened.toISOString();
+                    }
+                } catch {}
             }
 
-            if (!isoDate) return null;
-
-            const orderId = `TFR_${pair}_${isoDate.replace(/[-:T.Z]/g, '')}`;
+            const orderId = `TFR_${pair}_${isoClosedDate.replace(/[-:T.Z]/g, '')}`;
 
             return {
                 symbol: pair,
@@ -98,13 +109,13 @@ const ImportData = () => {
                 pnl: parseFloat(grossPnl.replace(/[$,]/g, '') || '0'),
                 netPnl: parseFloat(netPnl.replace(/[$,]/g, '') || '0'),
                 chargesSwap: totalFees.replace(/[$]/g, '') || '0.00',
-                openedAt: isoDate,
-                closedAt: isoDate,
+                openedAt: isoOpenedDate || isoClosedDate,
+                closedAt: isoClosedDate,
                 orderId,
                 status: 'Closed',
                 side: get('SIDE').toUpperCase() === 'SHORT' ? 'Short' : 'Long'
             };
-        }).filter(t => t && t.orderId && t.openedAt);
+        }).filter(t => t && t.orderId && t.openedAt && t.closedAt);
     };
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
