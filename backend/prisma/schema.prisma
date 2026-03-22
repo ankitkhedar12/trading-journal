@@ -9,14 +9,23 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String   // In a real app this would be hashed
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  entries   JournalEntry[]
-  trades    Trade[]
+  id         String   @id @default(uuid())
+  email      String   @unique
+  password   String
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  entries    JournalEntry[]
+  trades     Trade[]
   propAccounts PropAccount[]
+}
+
+model SignupVerification {
+  id        String   @id @default(uuid())
+  email     String
+  code      String   // hashed 6-digit OTP
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
 
 model PropAccount {
@@ -28,6 +37,7 @@ model PropAccount {
   
   userId       String
   user         User     @relation(fields: [userId], references: [id])
+  hasHftWarning Boolean @default(false)
   
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -46,6 +56,7 @@ model Trade {
   closedAt     DateTime
   orderId      String   @unique
   status       String   // e.g "Closed"
+  side         String?  // "Long", "Short"
   broker       String   @default("vantage") // e.g "vantage", "the_funded_room"
 
   userId       String?

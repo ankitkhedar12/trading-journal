@@ -10,6 +10,16 @@ export class AuthController {
         return this.authService.login(body.email, body.password);
     }
 
+    @Post('signup')
+    async signup(@Body() body: any) {
+        return this.authService.signup(body.email, body.password);
+    }
+
+    @Post('verify-signup')
+    async verifySignup(@Body() body: { email: string; code: string }) {
+        return this.authService.verifySignup(body.email, body.code);
+    }
+
     @Post('forgot-password')
     async forgotPassword(@Body() body: { email: string }) {
         return this.authService.forgotPassword(body.email);

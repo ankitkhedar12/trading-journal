@@ -12,8 +12,8 @@ import {
     AutoGraph as AutoGraphIcon,
     Logout
 } from '@mui/icons-material';
-import { useThemeContext } from '../context/ThemeContext';
-import { useAuth } from '../context/AuthContext';
+import { useThemeContext } from '../context/ThemeContextType';
+import { useAuth } from '../context/AuthContextType';
 
 import { useState } from 'react';
 
@@ -79,9 +79,9 @@ const Layout = () => {
                     transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                     open={Boolean(anchorEl)}
                     onClose={handleClose}
-                    slotProps={{ paper: { sx: { mt: 1, minWidth: 200, borderRadius: '30px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' } } }}
+                    slotProps={{ paper: { sx: { mt: 1, minWidth: 200, borderRadius: '15px', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' } } }}
                 >
-                    <MenuItem disabled sx={{ opacity: '1 !important', borderBottom: '1px solid', borderColor: 'divider', mb: 1 }}>
+                    <MenuItem disabled sx={{ opacity: '1 !important', borderBottom: '1px solid', borderColor: 'divider', mb: .5 }}>
                         <Typography variant="body2" color="text.secondary">{user?.email}</Typography>
                     </MenuItem>
                     <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>

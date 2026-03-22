@@ -1,13 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
-import PropDashboard from './pages/PropDashboard';
-import ImportData from './pages/ImportData';
-import Login from './pages/Login';
-import ForgotPassword from './pages/ForgotPassword';
-import Journal from './pages/Journal';
-import Reports from './pages/Reports';
-import Settings from './pages/Settings';
+import Dashboard from './views/dashboard/Dashboard';
+import PropDashboard from './views/funded/PropDashboard';
+import ImportData from './views/import/ImportData';
+import Login from './views/auth/Login';
+import Signup from './views/auth/Signup';
+import ForgotPassword from './views/auth/ForgotPassword';
+import Journal from './views/journal/Journal';
+import Reports from './views/reports/Reports';
+import Settings from './views/settings/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
 
         <Route path="/" element={<ProtectedRoute />}>

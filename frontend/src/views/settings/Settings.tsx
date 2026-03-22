@@ -1,5 +1,5 @@
 import { Box, Typography, Card, CardContent, FormControl, RadioGroup, FormControlLabel, Radio, Switch } from '@mui/material';
-import { useThemeContext } from '../context/ThemeContext';
+import { useThemeContext } from '../../context/ThemeContextType';
 import { motion } from 'framer-motion';
 
 const Settings = () => {
@@ -11,24 +11,17 @@ const Settings = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            sx={{
-                width: '100%',
-                maxWidth: 800,
-                mx: 'auto',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 4
-            }}
+            className="settings-page"
         >
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary', mb: 2 }}>
+            <Typography variant="h3" sx={{ fontWeight: 800, color: 'text.primary', mb: 3 }}>
                 App Settings
             </Typography>
 
-            <Card className="lg-container" sx={{ background: 'transparent', borderRadius: '30px', overflow: 'visible' }}>
+            <Card className="lg-container" sx={{ background: 'transparent', borderRadius: '40px', overflow: 'visible' }}>
                 <div className="lg-filter" />
                 <div className="lg-overlay" />
                 <div className="lg-specular" />
-                <CardContent className="lg-content" sx={{ p: 4, position: 'relative', zIndex: 3 }}>
+                <CardContent className="lg-content" sx={{ p: 5, position: 'relative', zIndex: 3 }}>
                     <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>
                         Appearance
                     </Typography>
@@ -37,7 +30,7 @@ const Settings = () => {
                         {/* Theme Toggle */}
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Box>
-                                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Theme Mode</Typography>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Theme Mode</Typography>
                                 <Typography variant="body2" color="text.secondary">Toggle between light and dark mode</Typography>
                             </Box>
                             <FormControlLabel
@@ -50,7 +43,7 @@ const Settings = () => {
                         {/* Liquid Glass Toggle */}
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                             <Box>
-                                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Liquid Glass Style</Typography>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Liquid Glass Style</Typography>
                                 <Typography variant="body2" color="text.secondary">Choose the appearance of floating UI elements</Typography>
                             </Box>
 

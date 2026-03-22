@@ -1,0 +1,132 @@
+@use "../abstracts" as *;
+
+//common button style ----------
+.theme-btn {
+  padding: 10px 25px;
+  font-size: $text-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.4s all;
+  font-weight: 600;
+  white-space: nowrap;
+  @media screen and (max-width: 767px) {
+    padding: 0.8rem 1rem;
+  }
+  &.rounded-sm {
+    border-radius: 6px;
+  }
+  &.rounded-md {
+    border-radius: 12px;
+  }
+  &.rounded-lg {
+    border-radius: 20px;
+  }
+  &.button-lg {
+    padding: 16px;
+  }
+  &.button-sm {
+    padding: 5px 10px;
+    font-size: $text-xs;
+  }
+  &.button-full {
+    padding: 1rem 1.5rem;
+    font-size: $text-md;
+    width: 100%;
+    justify-content: center;
+    svg {
+      fill: $white;
+    }
+  }
+  &.primary-outline-btn {
+    border: 1px solid $primary;
+    background-color: transparent;
+    color: $primary;
+    &:hover {
+      background: $dark;
+      color: $white;
+      border-color: $dark;
+    }
+  }
+  &.primary-btn {
+    background: $primary;
+    border: 1px solid $primary;
+    color: $white;
+    &:hover {
+      background: $dark;
+    }
+  }
+  &.dark-btn {
+    background: $dark;
+    border: 1px solid $dark;
+    color: $white;
+    &:hover {
+      background: $white;
+      color: $dark;
+    }
+  }
+  &.dark-outline-btn {
+    background: transparent;
+    border: 1px solid $dark;
+    color: $dark;
+    &:hover {
+      background: $dark;
+      color: $white;
+    }
+  }
+  &.disable-btn {
+    background: #bdbdbd;
+    color: #808080;
+    border: 1px solid #939393;
+    cursor: default;
+  }
+  &.white-btn {
+    border: 1px solid transparent;
+    color: $dark;
+    background-color: $white;
+    &:hover {
+      background: $dark;
+      color: $white;
+      svg {
+        path {
+          stroke: $white;
+        }
+      }
+    }
+  }
+  &.white-outline-btn {
+    border: 1px solid $white;
+    color: $white;
+    background: transparent;
+    &:hover {
+      background: $white;
+      color: $dark;
+    }
+  }
+  &.clear-btn {
+    background-color: transparent;
+    color: $white;
+    border: none;
+  }
+  &.secondary-btn {
+    background: rgba($black, 0.05);
+    border: 1px solid rgba($black, 0.1);
+    color: $dark;
+    &:hover {
+      background: rgba($black, 0.1);
+      border-color: rgba($black, 0.15);
+    }
+  }
+  &.danger-btn {
+    background: #d34242;
+    border: 1px solid #d34242;
+    color: $white;
+    &:hover {
+      background: #b83636;
+      border-color: #b83636;
+    }
+  }
+  &.padding-lg {
+    padding: 10px 40px;
+  }
+}

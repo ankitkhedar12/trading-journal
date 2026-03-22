@@ -35,6 +35,7 @@ export class TradesService {
                     closedAt: trade.closedAt ? new Date(this.parseDate(trade.closedAt)) : new Date(this.parseDate(trade.openedAt)),
                     orderId: trade.orderId,
                     status: trade.status || 'Closed',
+                    side: trade.side,
                     broker,
                     userId,
                 }
@@ -65,12 +66,15 @@ export class TradesService {
             if (t.pnl < largestLoss) largestLoss = t.pnl;
         });
 
-        // Generate cumulative Chart data
         let cumulative = 0;
-        const chartData = allTrades.map(trade => {
+        const chartData = allTrades.map((trade, index) => {
             cumulative += trade.pnl;
             return {
+                index,
                 date: trade.openedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                fullDate: trade.openedAt.toLocaleString(),
+                symbol: trade.symbol,
+                tradePnl: trade.pnl,
                 pnl: parseFloat(cumulative.toFixed(2))
             };
         });

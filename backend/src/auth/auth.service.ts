@@ -33,10 +33,98 @@ export class AuthService {
         });
     }
 
+    async signup(email: string, pass?: string) {
+        const cleanEmail = email.trim().toLowerCase();
+        
+        // Check if user exists and is verified
+        const existingUser = await this.prisma.user.findUnique({ where: { email: cleanEmail } });
+        if (existingUser && existingUser.isVerified) {
+            throw new BadRequestException('User with this email already exists');
+        }
+
+        // If password provided, update/create unverified user
+        if (pass) {
+            const hashedPassword = await bcrypt.hash(pass, 10);
+            await this.prisma.user.upsert({
+                where: { email: cleanEmail },
+                update: { password: hashedPassword, isVerified: false },
+                create: { email: cleanEmail, password: hashedPassword, isVerified: false },
+            });
+        } else if (!existingUser) {
+            throw new BadRequestException('Password is required for registration.');
+        }
+
+        // Generate 6-digit OTP
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        const hashedCode = await bcrypt.hash(code, 10);
+
+        // Store verification code
+        await this.prisma.signupVerification.deleteMany({ where: { email: cleanEmail } });
+        await this.prisma.signupVerification.create({
+            data: {
+                email: cleanEmail,
+                code: hashedCode,
+                expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+            },
+        });
+
+        // Send email
+        await this.mailService.sendSignupVerificationCode(cleanEmail, code);
+
+        return { message: 'Verification code sent to your email.' };
+    }
+
+    async verifySignup(email: string, code: string) {
+        const cleanEmail = email.trim().toLowerCase();
+        const cleanCode = code.trim();
+
+        // Find the latest verification record
+        const verification = await this.prisma.signupVerification.findFirst({
+            where: {
+                email: cleanEmail,
+                expiresAt: { gt: new Date() },
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+
+        if (!verification) {
+            throw new BadRequestException('Invalid or expired verification code.');
+        }
+
+        // Compare codes
+        const isMatch = await bcrypt.compare(cleanCode, verification.code);
+        if (!isMatch) {
+            throw new BadRequestException('Invalid or expired verification code.');
+        }
+
+        // Mark user as verified
+        const user = await this.prisma.user.update({
+            where: { email: cleanEmail },
+            data: { isVerified: true },
+        });
+
+        // Cleanup verification codes for this email
+        await this.prisma.signupVerification.deleteMany({ where: { email: cleanEmail } });
+
+        // Generate token and login
+        const payload = { email: user.email, sub: user.id };
+        return {
+            access_token: this.jwtService.sign(payload),
+            user: {
+                id: user.id,
+                email: user.email
+            }
+        };
+    }
+
     async login(email: string, pass: string) {
         const user = await this.prisma.user.findUnique({ where: { email } });
         if (!user) {
             throw new UnauthorizedException('Invalid credentials');
+        }
+
+        if (!user.isVerified) {
+            throw new UnauthorizedException('Please verify your email before logging in.');
         }
 
         const isMatch = await bcrypt.compare(pass, user.password);

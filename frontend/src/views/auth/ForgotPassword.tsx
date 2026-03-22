@@ -3,8 +3,26 @@ import { Box, Button, TextField, Typography, Paper, Alert, CircularProgress } fr
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowBack, Email, Lock, CheckCircle } from '@mui/icons-material';
-import { useThemeContext } from '../context/ThemeContext';
-import { getBaseUrl } from '../utils/config';
+import { useThemeContext } from '../../context/ThemeContextType';
+import { getBaseUrl } from '../../utils/config';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+    forgotPasswordEmailSchema,
+    otpSchema,
+    resetPasswordSchema,
+} from '../../utils/validators';
+import type {
+    ForgotPasswordEmailData,
+    OtpFormData,
+    ResetPasswordFormData,
+} from '../../utils/validators';
+import {
+    sanitizeEmail,
+    sanitizeInput,
+    getSecureHeaders,
+    isRateLimited,
+} from '../../utils/security';
 
 type Step = 'email' | 'otp' | 'password' | 'success';
 
@@ -12,114 +30,114 @@ const ForgotPassword = () => {
     const { mode } = useThemeContext();
     const navigate = useNavigate();
     const [step, setStep] = useState<Step>('email');
-    const [email, setEmail] = useState('');
-    const [otp, setOtp] = useState('');
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
     const [resetToken, setResetToken] = useState('');
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
+    const [serverError, setServerError] = useState('');
+    const [serverSuccess, setServerSuccess] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [emailValue, setEmailValue] = useState('');
 
-    const handleSendCode = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
-        
-        // Email validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email.trim())) {
-            setError('Please enter a valid email address.');
+    // Email form
+    const emailForm = useForm<ForgotPasswordEmailData>({
+        resolver: zodResolver(forgotPasswordEmailSchema),
+        defaultValues: { email: '' },
+    });
+
+    // OTP form
+    const otpForm = useForm<OtpFormData>({
+        resolver: zodResolver(otpSchema),
+        defaultValues: { otp: '' },
+    });
+
+    // Password form
+    const passwordForm = useForm<ResetPasswordFormData>({
+        resolver: zodResolver(resetPasswordSchema),
+        defaultValues: { newPassword: '', confirmPassword: '' },
+    });
+
+    const handleSendCode = async (data: ForgotPasswordEmailData) => {
+        if (isRateLimited('forgot-password', 5000)) {
+            setServerError('Too many attempts. Please wait a moment.');
             return;
         }
-
+        setServerError('');
         setIsLoading(true);
+
+        const cleanEmail = sanitizeEmail(data.email);
+        setEmailValue(cleanEmail);
 
         try {
             const res = await fetch(`${getBaseUrl()}/api/auth/forgot-password`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: email.trim() }),
+                headers: getSecureHeaders(),
+                body: JSON.stringify({ email: cleanEmail }),
             });
 
-            const data = await res.json();
+            const resData = await res.json();
             if (res.ok) {
-                setSuccess('A reset code has been sent to your email.');
+                setServerSuccess('A reset code has been sent to your email.');
                 setStep('otp');
             } else {
-                setError(data.message || 'Failed to send reset code.');
+                setServerError(resData.message || 'Failed to send reset code.');
             }
         } catch {
-            setError('Network error. Please try again.');
+            setServerError('Network error. Please try again.');
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleVerifyCode = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
-        setSuccess('');
-        
-        if (otp.length !== 6) {
-            setError('Please enter the full 6-digit code.');
+    const handleVerifyCode = async (data: OtpFormData) => {
+        if (isRateLimited('verify-otp', 3000)) {
+            setServerError('Too many attempts. Please wait.');
             return;
         }
-
+        setServerError('');
+        setServerSuccess('');
         setIsLoading(true);
 
         try {
             const res = await fetch(`${getBaseUrl()}/api/auth/verify-reset-code`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: email.trim(), code: otp.trim() }),
+                headers: getSecureHeaders(),
+                body: JSON.stringify({
+                    email: emailValue,
+                    code: sanitizeInput(data.otp, 6),
+                }),
             });
 
-            const data = await res.json();
-
+            const resData = await res.json();
             if (res.ok) {
-                setResetToken(data.resetToken);
+                setResetToken(resData.resetToken);
                 setStep('password');
             } else {
-                setError(data.message || 'Invalid or expired code.');
+                setServerError(resData.message || 'Invalid or expired code.');
             }
         } catch {
-            setError('Network error. Please try again.');
+            setServerError('Network error. Please try again.');
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleResetPassword = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
-
-        if (newPassword.length < 6) {
-            setError('Password must be at least 6 characters.');
-            return;
-        }
-
-        if (newPassword !== confirmPassword) {
-            setError('Passwords do not match.');
-            return;
-        }
-
+    const handleResetPassword = async (data: ResetPasswordFormData) => {
+        setServerError('');
         setIsLoading(true);
 
         try {
             const res = await fetch(`${getBaseUrl()}/api/auth/reset-password`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ resetToken, newPassword }),
+                headers: getSecureHeaders(),
+                body: JSON.stringify({ resetToken, newPassword: data.newPassword }),
             });
 
-            const data = await res.json();
+            const resData = await res.json();
             if (res.ok) {
                 setStep('success');
             } else {
-                setError(data.message || 'Failed to reset password.');
+                setServerError(resData.message || 'Failed to reset password.');
             }
         } catch {
-            setError('Network error. Please try again.');
+            setServerError('Network error. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -131,47 +149,33 @@ const ForgotPassword = () => {
         exit: { x: -60, opacity: 0 },
     };
 
-    const passwordsMatch = newPassword === confirmPassword && confirmPassword !== '';
-
     return (
-        <Box sx={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            p: 2,
-        }}>
+        <Box className="auth-page">
             <motion.div
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                style={{ width: '100%', maxWidth: 420 }}
+                className="auth-card auth-forgot-password-card"
             >
-                <Paper
-                    className="glass-effect"
-                    sx={{
-                        p: 5,
-                        borderRadius: '30px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        overflow: 'hidden',
-                    }}
-                >
+                <Paper className="glass-effect auth-paper" sx={{ overflow: 'hidden' }}>
                     <motion.div
                         animate={{ y: [0, -10, 0] }}
                         transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-                        style={{ zIndex: 9999, position: 'relative' }}
+                        className="auth-logo-container"
                     >
-                        <img src={mode === 'dark' ? "/LogoDark.png" : "/LogoLight.png"} alt="AntiGrav" style={{ height: '60px', objectFit: 'contain', display: 'block' }} />
+                        <img
+                            src={mode === 'dark' ? "/LogoDark.png" : "/LogoLight.png"}
+                            alt="AntiGrav"
+                            className="auth-logo"
+                        />
                     </motion.div>
 
-                    <Typography variant="h4" sx={{ mt: 2, mb: 1, fontWeight: 'bold', fontFamily: '"Oleo Script", cursive' }}>
+                    <Typography variant="h4" className="auth-title">
                         AntiGrav
                     </Typography>
 
                     <AnimatePresence mode="wait">
-                        {/* ── Step 1: Email ──────────────────── */}
+                        {/* Step 1: Email */}
                         {step === 'email' && (
                             <motion.div
                                 key="email"
@@ -186,17 +190,22 @@ const ForgotPassword = () => {
                                     Enter your email to receive a reset code.
                                 </Typography>
 
-                                {error && <Alert severity="error" sx={{ width: '100%', mb: 2 }}>{error}</Alert>}
+                                {serverError && <Alert severity="error" sx={{ width: '100%', mb: 2 }}>{serverError}</Alert>}
 
-                                <Box component="form" onSubmit={handleSendCode} sx={{ width: '100%' }}>
+                                <Box
+                                    component="form"
+                                    onSubmit={emailForm.handleSubmit(handleSendCode)}
+                                    className="auth-form"
+                                    noValidate
+                                >
                                     <TextField
-                                        required
                                         fullWidth
                                         label="Email Address"
                                         type="email"
                                         variant="outlined"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
+                                        error={!!emailForm.formState.errors.email}
+                                        helperText={emailForm.formState.errors.email?.message}
+                                        {...emailForm.register('email')}
                                         sx={{ mb: 3 }}
                                         slotProps={{
                                             input: {
@@ -210,7 +219,7 @@ const ForgotPassword = () => {
                                         variant="contained"
                                         size="large"
                                         disabled={isLoading}
-                                        sx={{ py: 1.5, fontWeight: 'bold', borderRadius: '30px', boxShadow: '0 8px 16px rgba(33, 150, 243, 0.3)' }}
+                                        className="auth-submit-btn"
                                     >
                                         {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Send Reset Code'}
                                     </Button>
@@ -227,7 +236,7 @@ const ForgotPassword = () => {
                             </motion.div>
                         )}
 
-                        {/* ── Step 2: OTP ──────────────────────── */}
+                        {/* Step 2: OTP */}
                         {step === 'otp' && (
                             <motion.div
                                 key="otp"
@@ -242,28 +251,34 @@ const ForgotPassword = () => {
                                     Enter the 6-digit code sent to
                                 </Typography>
                                 <Typography variant="body2" sx={{ mb: 3, textAlign: 'center', fontWeight: 'bold', color: 'primary.main' }}>
-                                    {email}
+                                    {emailValue}
                                 </Typography>
 
-                                {success && <Alert severity="success" sx={{ width: '100%', mb: 2 }}>{success}</Alert>}
-                                {error && <Alert severity="error" sx={{ width: '100%', mb: 2 }}>{error}</Alert>}
+                                {serverSuccess && <Alert severity="success" sx={{ width: '100%', mb: 2 }}>{serverSuccess}</Alert>}
+                                {serverError && <Alert severity="error" sx={{ width: '100%', mb: 2 }}>{serverError}</Alert>}
 
-                                <Box component="form" onSubmit={handleVerifyCode} sx={{ width: '100%' }}>
+                                <Box
+                                    component="form"
+                                    onSubmit={otpForm.handleSubmit(handleVerifyCode)}
+                                    className="auth-form"
+                                    noValidate
+                                >
                                     <TextField
-                                        required
                                         fullWidth
                                         label="Verification Code"
                                         variant="outlined"
-                                        value={otp}
-                                        onChange={(e) => {
-                                            // Allow only digits, max 6
-                                            const val = e.target.value.replace(/\D/g, '').slice(0, 6);
-                                            setOtp(val);
-                                        }}
                                         placeholder="000000"
+                                        error={!!otpForm.formState.errors.otp}
+                                        helperText={otpForm.formState.errors.otp?.message}
+                                        {...otpForm.register('otp', {
+                                            onChange: (e) => {
+                                                const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                                otpForm.setValue('otp', val);
+                                            },
+                                        })}
                                         slotProps={{
                                             input: {
-                                                style: { letterSpacing: '8px', textAlign: 'center', fontSize: '1.5rem', fontWeight: 'bold' }
+                                                className: 'otp-input',
                                             },
                                             htmlInput: {
                                                 maxLength: 6,
@@ -277,15 +292,15 @@ const ForgotPassword = () => {
                                         fullWidth
                                         variant="contained"
                                         size="large"
-                                        disabled={isLoading || otp.length !== 6}
-                                        sx={{ py: 1.5, fontWeight: 'bold', borderRadius: '30px', boxShadow: '0 8px 16px rgba(33, 150, 243, 0.3)' }}
+                                        disabled={isLoading}
+                                        className="auth-submit-btn"
                                     >
                                         {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Verify Code'}
                                     </Button>
                                 </Box>
 
                                 <Button
-                                    onClick={() => { setStep('email'); setError(''); setSuccess(''); }}
+                                    onClick={() => { setStep('email'); setServerError(''); setServerSuccess(''); }}
                                     startIcon={<ArrowBack />}
                                     sx={{ mt: 2, textTransform: 'none', fontWeight: 600, width: '100%' }}
                                 >
@@ -294,7 +309,7 @@ const ForgotPassword = () => {
                             </motion.div>
                         )}
 
-                        {/* ── Step 3: New Password ──────────────── */}
+                        {/* Step 3: New Password */}
                         {step === 'password' && (
                             <motion.div
                                 key="password"
@@ -309,17 +324,22 @@ const ForgotPassword = () => {
                                     Set your new password. (Min 6 characters)
                                 </Typography>
 
-                                {error && <Alert severity="error" sx={{ width: '100%', mb: 2 }}>{error}</Alert>}
+                                {serverError && <Alert severity="error" sx={{ width: '100%', mb: 2 }}>{serverError}</Alert>}
 
-                                <Box component="form" onSubmit={handleResetPassword} sx={{ width: '100%' }}>
+                                <Box
+                                    component="form"
+                                    onSubmit={passwordForm.handleSubmit(handleResetPassword)}
+                                    className="auth-form"
+                                    noValidate
+                                >
                                     <TextField
-                                        required
                                         fullWidth
                                         label="New Password"
                                         type="password"
                                         variant="outlined"
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        error={!!passwordForm.formState.errors.newPassword}
+                                        helperText={passwordForm.formState.errors.newPassword?.message}
+                                        {...passwordForm.register('newPassword')}
                                         sx={{ mb: 2 }}
                                         slotProps={{
                                             input: {
@@ -328,15 +348,13 @@ const ForgotPassword = () => {
                                         }}
                                     />
                                     <TextField
-                                        required
                                         fullWidth
                                         label="Confirm Password"
                                         type="password"
                                         variant="outlined"
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        error={confirmPassword !== '' && newPassword !== confirmPassword}
-                                        helperText={confirmPassword !== '' && newPassword !== confirmPassword ? 'Passwords do not match' : ''}
+                                        error={!!passwordForm.formState.errors.confirmPassword}
+                                        helperText={passwordForm.formState.errors.confirmPassword?.message}
+                                        {...passwordForm.register('confirmPassword')}
                                         sx={{ mb: 3 }}
                                         slotProps={{
                                             input: {
@@ -349,8 +367,8 @@ const ForgotPassword = () => {
                                         fullWidth
                                         variant="contained"
                                         size="large"
-                                        disabled={isLoading || !passwordsMatch || newPassword.length < 6}
-                                        sx={{ py: 1.5, fontWeight: 'bold', borderRadius: '30px', boxShadow: '0 8px 16px rgba(33, 150, 243, 0.3)' }}
+                                        disabled={isLoading}
+                                        className="auth-submit-btn"
                                     >
                                         {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Reset Password'}
                                     </Button>
@@ -358,7 +376,7 @@ const ForgotPassword = () => {
                             </motion.div>
                         )}
 
-                        {/* ── Step 4: Success ──────────────────── */}
+                        {/* Step 4: Success */}
                         {step === 'success' && (
                             <motion.div
                                 key="success"
@@ -387,7 +405,7 @@ const ForgotPassword = () => {
                                     variant="contained"
                                     size="large"
                                     onClick={() => navigate('/login')}
-                                    sx={{ py: 1.5, fontWeight: 'bold', borderRadius: '30px', boxShadow: '0 8px 16px rgba(33, 150, 243, 0.3)' }}
+                                    className="auth-submit-btn"
                                 >
                                     Go to Login
                                 </Button>
