@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { getBaseUrl } from '../../utils/config';
 import { useInvalidateTrades } from '../../hooks/useTradeQueries';
 import { validateFile, getSecureHeaders } from '../../utils/security';
+import { buildTradesFromOrders } from '../../utils/tradeImportUtils';
 
 import { BROKERS } from '../../constants/common';
 
@@ -55,67 +56,58 @@ const ImportData = () => {
     };
 
     const parseFundedRoomTrades = (rawData: Record<string, string>[]) => {
-        return rawData.map((row) => {
-            if (!row || typeof row !== 'object') return null;
-
-            const get = (key: string) => {
-                const target = key.toLowerCase().replace(/[^a-z0-9]/g, '');
-                const foundKey = Object.keys(row).find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '') === target);
-                return foundKey ? String(row[foundKey]).trim() : '';
-            };
-
-            const closedRaw = get('CLOSED');
-            const openedRaw = get('OPENED');
-            const pair = get('PAIR').replace(/\//g, '');
-            const lotSize = get('LOTSIZE') || get('LOT SIZE');
-            const entryPrice = get('ENTRYPRICE') || get('ENTRY PRICE');
-            const exitPrice = get('EXITPRICE') || get('EXIT PRICE');
-            const totalFees = get('TOTALFEES') || get('TOTAL FEES');
-            const grossPnl = get('GROSSPL') || get('GROSS P&L') || get('GROSSP&L');
-            const netPnl = get('NETPL') || get('NET P&L') || get('NETP&L');
-
-            if (!closedRaw || !pair) return null;
-
+        const reconstructedTrades = buildTradesFromOrders(rawData);
+        
+        return reconstructedTrades.filter(t => t.exitLot > 0).map((t) => {
             let isoClosedDate = null;
             let isoOpenedDate = null;
 
             try {
-                const cleanClosedStr = closedRaw.replace(/GMT/g, '').replace(/,/g, '');
+                const cleanOpenedStr = t.entryTime.replace(/GMT/g, '').replace(/,/g, '');
+                const dOpened = new Date(cleanOpenedStr);
+                if (!isNaN(dOpened.getTime())) {
+                    isoOpenedDate = dOpened.toISOString();
+                }
+            } catch {}
+
+            try {
+                const cleanClosedStr = t.exitTime.replace(/GMT/g, '').replace(/,/g, '');
                 const dClosed = new Date(cleanClosedStr);
                 if (!isNaN(dClosed.getTime())) {
                     isoClosedDate = dClosed.toISOString();
                 }
             } catch {}
 
-            if (!isoClosedDate) return null;
+            if (!isoOpenedDate || !isoClosedDate) return null;
 
-            if (openedRaw) {
-                try {
-                    const cleanOpenedStr = openedRaw.replace(/GMT/g, '').replace(/,/g, '');
-                    const dOpened = new Date(cleanOpenedStr);
-                    if (!isNaN(dOpened.getTime())) {
-                        isoOpenedDate = dOpened.toISOString();
-                    }
-                } catch {}
+            const orderId = `TFR_${t.pair}_${isoClosedDate.replace(/[-:T.Z]/g, '')}`;
+
+            // PnL Estimation based on reconstructed lot sizes and prices
+            let pnlRaw = (t.avgExitPrice - t.avgEntryPrice) * t.entryLot;
+            if (t.direction === 'Short') {
+                pnlRaw = (t.avgEntryPrice - t.avgExitPrice) * t.entryLot;
             }
-
-            const orderId = `TFR_${pair}_${isoClosedDate.replace(/[-:T.Z]/g, '')}`;
+            
+            // Standard multiplier estimation
+            if (t.pair.toUpperCase().includes('XAU')) pnlRaw *= 100;
+            else if (t.pair.toUpperCase().includes('BTC') || t.pair.toUpperCase().includes('US30') || t.pair.toUpperCase().includes('NAS')) pnlRaw *= 1;
+            else pnlRaw *= 100000;
 
             return {
-                symbol: pair,
-                volume: lotSize,
-                entryPrice: parseFloat(entryPrice.replace(/[$,]/g, '') || '0'),
-                closePrice: parseFloat(exitPrice.replace(/[$,]/g, '') || '0'),
-                pnl: parseFloat(grossPnl.replace(/[$,]/g, '') || '0'),
-                netPnl: parseFloat(netPnl.replace(/[$,]/g, '') || '0'),
-                chargesSwap: totalFees.replace(/[$]/g, '') || '0.00',
-                openedAt: isoOpenedDate || isoClosedDate,
+                symbol: t.pair,
+                volume: t.entryLot.toFixed(2),
+                entryPrice: parseFloat(t.avgEntryPrice.toFixed(5)),
+                closePrice: parseFloat(t.avgExitPrice.toFixed(5)),
+                pnl: parseFloat(pnlRaw.toFixed(2)),
+                netPnl: parseFloat(pnlRaw.toFixed(2)),
+                chargesSwap: '0.00',
+                openedAt: isoOpenedDate,
                 closedAt: isoClosedDate,
                 orderId,
                 status: 'Closed',
-                side: get('SIDE').toUpperCase() === 'SHORT' ? 'Short' : 'Long'
+                side: t.direction
             };
-        }).filter(t => t && t.orderId && t.openedAt && t.closedAt);
+        }).filter(t => t !== null);
     };
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

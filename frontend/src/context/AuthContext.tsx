@@ -15,32 +15,12 @@ import {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    // Check sessionStorage first, fall back to legacy localStorage
-    const session = getAuthSession();
-    if (session) return true;
-    return localStorage.getItem('auth') === 'true';
+    return !!getAuthSession();
   });
 
   const [user, setUser] = useState<{ email: string; token: string } | null>(() => {
-    // Check local auth session first, fall back to legacy localStorage
     const session = getAuthSession();
-    if (session) return { email: session.email, token: session.token };
-    // Fall back to legacy localStorage
-    const rawUser = localStorage.getItem('user');
-    if (rawUser) {
-      try {
-        const parsed = JSON.parse(rawUser);
-        // Migrate to sessionStorage
-        storeAuthSession(parsed.email, parsed.token);
-        // Clean up legacy storage
-        localStorage.removeItem('auth');
-        localStorage.removeItem('user');
-        return parsed;
-      } catch {
-        return null;
-      }
-    }
-    return null;
+    return session ? { email: session.email, token: session.token } : null;
   });
 
   // Periodically check token expiry

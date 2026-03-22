@@ -47,3 +47,16 @@ export interface TradeItemProps {
     isViolation?: boolean;
     violationType?: string;
 }
+
+export interface ReconstructedTrade {
+    pair: string;
+    direction: 'Long' | 'Short';
+    entryTime: string;
+    exitTime: string;
+    entryOrders: any[];
+    exitOrders: any[];
+    entryLot: number;
+    exitLot: number;
+    avgEntryPrice: number;
+    avgExitPrice: number;
+}

@@ -60,10 +60,17 @@ export class PropAccountService {
         });
 
         const dayStrs = Object.keys(tradesByDay).sort();
+        let validTradingDaysCount = 0;
 
         // Consistency & Win/Loss Day Logic
         dayStrs.forEach(dayStr => {
             const dayPnl = tradesByDay[dayStr].reduce((sum, t) => sum + t.pnl, 0);
+            
+            // A trading day is only counted when balance moves by 0.25% or more of initial balance
+            if (Math.abs(dayPnl) >= initialBalance * 0.0025) {
+                validTradingDaysCount++;
+            }
+
             if (dayPnl > 0) {
                 totalWinDays++;
                 totalProfit += dayPnl;
@@ -85,8 +92,12 @@ export class PropAccountService {
         if (account.accountType === '1_STEP') {
             dailyLossLimitPct = 3;
             maxLossLimitPct = 6;
-            profitTargetPct = account.status === 'PHASE_1' ? 10 : 0;
-            minDays = account.status === 'PHASE_1' ? 3 : 0;
+            if (account.status === 'PHASE_1') {
+                profitTargetPct = 10;
+                minDays = 3;
+            } else if (account.status === 'FUNDED') {
+                maxRiskPerSymbolPct = 3;
+            }
         } else if (account.accountType === '2_STEP') {
             dailyLossLimitPct = 5;
             maxLossLimitPct = 10;
@@ -148,9 +159,41 @@ export class PropAccountService {
             }
         }
 
+        // HFT Check
+        let currentHftViolations = 0;
+        for (let i = 0; i < allTrades.length; i++) {
+            const current = allTrades[i];
+            if (!current.side) continue;
+            
+            let countInWindow = 1;
+            for (let j = i + 1; j < allTrades.length; j++) {
+                const next = allTrades[j];
+                const diffMs = next.openedAt.getTime() - current.openedAt.getTime();
+                if (diffMs > 3 * 60 * 1000) break;
+                if (current.symbol === next.symbol && current.side === next.side) {
+                    countInWindow++;
+                }
+            }
+            if (countInWindow >= 4) {
+                currentHftViolations++;
+                i += (countInWindow - 1);
+            }
+        }
+
         // Automatic Status Transitions & Failures
         let updatedStatus = account.status;
         let violationMessage = null;
+        let updatedHftWarning = account.hasHftWarning;
+
+        if (currentHftViolations >= 2) {
+            updatedStatus = 'FAILED';
+            violationMessage = 'HFT Rule Violated (Multiple Offenses): 4+ orders on same asset/direction within 3 mins.';
+        } else if (currentHftViolations === 1) {
+            updatedHftWarning = true;
+            if (updatedStatus !== 'FAILED') {
+                violationMessage = 'HFT Warning Issued: 4+ orders on same asset/direction within 3 mins detected.';
+            }
+        }
 
         if (currentDayDrawdown >= maxDailyLossAllowed) {
             updatedStatus = 'FAILED';
@@ -161,9 +204,9 @@ export class PropAccountService {
         } else if (maxRiskViolation) {
             updatedStatus = 'FAILED';
             violationMessage = 'Max Risk Per Trade (Aggregated) exceeded 3%.';
-        } else if (account.status !== 'FUNDED' && account.status !== 'FAILED') {
+        } else if (updatedStatus !== 'FAILED' && account.status !== 'FUNDED') {
             const reachedTarget = profitTargetPct > 0 && currentNetProfit >= targetProfitVal;
-            const reachedMinDays = dayStrs.length >= minDays;
+            const reachedMinDays = validTradingDaysCount >= minDays;
 
             if (reachedTarget && reachedMinDays) {
                 if (account.accountType === '2_STEP' && account.status === 'PHASE_1') {
@@ -174,14 +217,17 @@ export class PropAccountService {
             }
         }
 
-        // If status changed, save it AND reset trades for this firm
-        if (updatedStatus !== account.status) {
-            await this.deleteTradesForFirm(userId, account.firmName);
+        // If status or warning changed, save it
+        if (updatedStatus !== account.status || updatedHftWarning !== account.hasHftWarning) {
+            if (updatedStatus !== account.status) {
+                await this.deleteTradesForFirm(userId, account.firmName);
+            }
             await this.prisma.propAccount.update({
                 where: { id: account.id },
-                data: { status: updatedStatus }
+                data: { status: updatedStatus, hasHftWarning: updatedHftWarning }
             });
             account.status = updatedStatus;
+            account.hasHftWarning = updatedHftWarning;
         }
 
         // P&L Calendar mapped to UI format
@@ -212,7 +258,7 @@ export class PropAccountService {
                 totalPnl: currentNetProfit,
                 pnlPct: (currentNetProfit / initialBalance) * 100,
                 winRate: allTrades.length > 0 ? `${((allTrades.filter(t => t.pnl > 0).length / allTrades.length) * 100).toFixed(0)}%` : '0%',
-                tradingDays: dayStrs.length,
+                tradingDays: validTradingDaysCount,
                 totalTrades: allTrades.length,
                 totalWinDays,
                 totalLossDays,
@@ -222,7 +268,7 @@ export class PropAccountService {
                 maxDrawdown: { current: currentTotalDrawdown, limit: maxTotalLossAllowed },
                 profitTarget: { current: Math.max(0, currentNetProfit), limit: targetProfitVal, isActive: profitTargetPct > 0 },
                 consistency: { currentPct: consistencyScore, limitPct: 15, isActive: account.accountType === 'INSTANT' },
-                minDays: { current: dayStrs.length, limit: minDays },
+                minDays: { current: validTradingDaysCount, limit: minDays },
                 maxRisk: { currentPct: maxRiskPerSymbolPct > 0 ? (maxRiskViolation ? 100 : 0) : 0, limitPct: maxRiskPerSymbolPct, isActive: maxRiskPerSymbolPct > 0 }
             },
             chartData,
@@ -237,13 +283,14 @@ export class PropAccountService {
 
         if (!account) return null;
 
-        const updateData: any = {};
-        if (data.status) {
-            if (data.status !== account.status) {
-                await this.deleteTradesForFirm(userId, account.firmName);
-            }
-            updateData.status = data.status;
+        const updateData: any = { ...data };
+        if (data.status && data.status !== account.status) {
+            await this.deleteTradesForFirm(userId, account.firmName);
         }
+        
+        // Remove id and userId from updateData to prevent issues
+        delete updateData.id;
+        delete updateData.userId;
 
         return this.prisma.propAccount.update({
             where: { id, userId },

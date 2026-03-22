@@ -19,6 +19,12 @@ import AccountSetupCenter from './components/AccountSetupCenter';
 import ObjectiveRules from './components/ObjectiveRules';
 import AccountMatrix from './components/AccountMatrix';
 
+const LEVERAGE_INFO: Record<string, string> = {
+    'INSTANT': 'FX 1:30 • Comm 1:10 • Crypto 1:1',
+    '1_STEP': 'FX 1:30 • Comm 1:10 • Crypto 1:1',
+    '2_STEP': 'FX 1:100 • Comm 1:30 • Crypto 1:2'
+};
+
 const PropDashboard = () => {
     const { user } = useAuth();
     const invalidateTrades = useInvalidateTrades();
@@ -31,6 +37,7 @@ const PropDashboard = () => {
     const [accountType, setAccountType] = useState<string>(ACCOUNT_TYPES.ONE_STEP);
     const [accountSize, setAccountSize] = useState<number>(100000);
     const [status, setStatus] = useState<string>(ACCOUNT_STATUS.PHASE_1);
+    const [hasHftWarning, setHasHftWarning] = useState<boolean>(false);
 
     // Day Selection State
     const [selectedDay, setSelectedDay] = useState<Date | null>(null);
@@ -46,6 +53,7 @@ const PropDashboard = () => {
             if (dashboardData.account.accountType !== accountType) setAccountType(dashboardData.account.accountType);
             if (dashboardData.account.accountSize !== accountSize) setAccountSize(dashboardData.account.accountSize);
             if (dashboardData.account.status !== status) setStatus(dashboardData.account.status);
+            if (dashboardData.account.hasHftWarning !== hasHftWarning) setHasHftWarning(dashboardData.account.hasHftWarning);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dashboardData?.account]);
@@ -67,7 +75,7 @@ const PropDashboard = () => {
             await fetch(`${getBaseUrl()}/api/prop-account`, {
                 method: 'POST',
                 headers: getSecureHeaders(user?.token),
-                body: JSON.stringify({ firmName, accountType, accountSize: Number(accountSize), status })
+                body: JSON.stringify({ firmName, accountType, accountSize: Number(accountSize), status, hasHftWarning })
             });
             setOpenSetup(false);
             invalidatePropData();
@@ -82,7 +90,7 @@ const PropDashboard = () => {
             const res = await fetch(`${getBaseUrl()}/api/prop-account/${dashboardData.account.id}`, {
                 method: 'POST',
                 headers: getSecureHeaders(user?.token),
-                body: JSON.stringify({ firmName, accountType, accountSize: Number(accountSize), status })
+                body: JSON.stringify({ firmName, accountType, accountSize: Number(accountSize), status, hasHftWarning })
             });
             if (res.ok) {
                 setOpenEdit(false);
@@ -135,19 +143,23 @@ const PropDashboard = () => {
     // --- SETUP VIEW ---
     if (!dashboardData?.account) {
         return (
-            <AccountSetupCenter 
-                openSetup={openSetup}
-                setOpenSetup={setOpenSetup}
-                firmName={firmName}
-                setFirmName={setFirmName}
-                accountType={accountType}
-                setAccountType={setAccountType}
-                accountSize={accountSize}
-                setAccountSize={setAccountSize}
-                status={status}
-                setStatus={setStatus}
-                onCreate={handleCreateAccount}
-            />
+            <Box className="funded-page">
+                <AccountSetupCenter
+                    openSetup={openSetup}
+                    setOpenSetup={setOpenSetup}
+                    firmName={firmName}
+                    setFirmName={setFirmName}
+                    accountType={accountType}
+                    setAccountType={setAccountType}
+                    accountSize={accountSize}
+                    setAccountSize={setAccountSize}
+                    status={status}
+                    setStatus={setStatus}
+                    hasHftWarning={hasHftWarning}
+                    setHasHftWarning={setHasHftWarning}
+                    onCreate={handleCreateAccount}
+                />
+            </Box>
         );
     }
 
@@ -155,17 +167,8 @@ const PropDashboard = () => {
     const isFailed = account.status === ACCOUNT_STATUS.FAILED;
 
     return (
-        <Box className="funded-page">
-            {/* Violation Alerts */}
-            <AnimatePresence>
-                {(isFailed || violationMessage) && (
-                    <Box component="div">
-                        <Alert severity="error" variant="filled" sx={{ borderRadius: '30px', mb: 2, fontWeight: 'bold', fontSize: '1.1rem' }} action={<Button color="inherit" size="small" onClick={() => setOpenEdit(true)}>FIX / OVERRIDE</Button>}>
-                            ACCOUNT FAILED: {violationMessage || "A rule has been violated. The account is marked as Failed."}
-                        </Alert>
-                    </Box>
-                )}
-            </AnimatePresence>
+        <Box className="funded-page" sx={{ gap: 2.5 }}>
+
 
             {/* Header */}
             <Box className="funded-header">
@@ -178,12 +181,43 @@ const PropDashboard = () => {
                     <Typography color="text.secondary" variant="h6">
                         ${account.accountSize.toLocaleString()} Account • {account.firmName}
                     </Typography>
+                    <Typography variant="caption" color="primary.main" sx={{ fontWeight: 'bold', letterSpacing: 0.5 }}>
+                        LEVERAGE: {LEVERAGE_INFO[account.accountType] || 'N/A'}
+                    </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', gap: 2 }}>
                     <Button variant="outlined" size="small" onClick={() => setOpenEdit(true)} sx={{ borderRadius: '10px !important' }}>Edit Account</Button>
                     <Button variant="outlined" color="error" size="small" onClick={handleDeleteAccount} sx={{ borderRadius: '10px !important' }}>Delete</Button>
                 </Box>
             </Box>
+
+            {/* Violation Alerts */}
+            <AnimatePresence>
+                {(isFailed || violationMessage || account.hasHftWarning) && (
+                    <Box component="div">
+                        <Alert
+                            severity={isFailed ? "error" : "warning"}
+                            variant="filled"
+                            sx={{
+                                borderRadius: '20px',
+                                fontWeight: 'bold',
+                                // boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+                                background: "rgba(237, 108, 2, 0.9)"
+                            }}
+                            action={isFailed ? (
+                                <Button color="inherit" size="small" onClick={() => setOpenEdit(true)}>FIX / OVERRIDE</Button>
+                            ) : null}
+                        >
+                            {isFailed
+                                ? `ACCOUNT FAILED: ${violationMessage || "A rule has been violated. The account is marked as Failed."}`
+                                : account.hasHftWarning
+                                    ? "HFT VIOLATION WARNING: Our system detected High-Frequency Trading (4+ orders in 3 mins). Please note that a second offense will result in immediate account failure."
+                                    : violationMessage
+                            }
+                        </Alert>
+                    </Box>
+                )}
+            </AnimatePresence>
 
             <Grid container spacing={4}>
                 {/* Row 1: Chart and Rules */}
@@ -228,7 +262,7 @@ const PropDashboard = () => {
                 </Grid>
 
                 <Grid size={{ xs: 12, lg: 3 }} sx={{ display: 'flex' }}>
-                    <AccountMatrix 
+                    <AccountMatrix
                         metrics={metrics}
                         currentDate={currentDate}
                         totalTradesThisMonth={totalTradesThisMonth}
@@ -244,6 +278,8 @@ const PropDashboard = () => {
                 accountSize={accountSize}
                 status={status}
                 setStatus={setStatus}
+                hasHftWarning={hasHftWarning}
+                setHasHftWarning={setHasHftWarning}
                 onUpdate={handleUpdateAccount}
             />
             <DayTradesModal

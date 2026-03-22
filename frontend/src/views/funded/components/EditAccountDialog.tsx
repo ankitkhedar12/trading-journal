@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     Dialog, DialogTitle, DialogContent, Box, Typography,
-    TextField, MenuItem, DialogActions, Button
+    TextField, MenuItem, DialogActions, Button, FormControlLabel, Checkbox
 } from '@mui/material';
 import { Warning } from '@mui/icons-material';
 
@@ -15,6 +15,8 @@ const EditAccountDialog: React.FC<EditAccountDialogProps> = ({
     accountSize,
     status,
     setStatus,
+    hasHftWarning,
+    setHasHftWarning,
     onUpdate
 }) => {
     return (
@@ -62,6 +64,18 @@ const EditAccountDialog: React.FC<EditAccountDialogProps> = ({
                     <MenuItem value="FUNDED">Funded / Master</MenuItem>
                     <MenuItem value="FAILED" sx={{ color: 'error.main' }}>FAILED (Account Revoked)</MenuItem>
                 </TextField>
+                
+                <FormControlLabel
+                    control={
+                        <Checkbox 
+                            checked={hasHftWarning} 
+                            onChange={(e) => setHasHftWarning(e.target.checked)} 
+                            color="warning" 
+                        />
+                    }
+                    label={<Typography sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Account has HFT Warning</Typography>}
+                    sx={{ mt: 1 }}
+                />
             </DialogContent>
             <DialogActions sx={{ p: 3 }}>
                 <Button onClick={onClose}>Cancel</Button>

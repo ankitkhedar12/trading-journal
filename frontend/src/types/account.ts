@@ -9,6 +9,8 @@ export interface SetupAccountDialogProps {
     setAccountSize: (val: number) => void;
     status: string;
     setStatus: (val: string) => void;
+    hasHftWarning: boolean;
+    setHasHftWarning: (val: boolean) => void;
     onCreate: () => void;
 }
 
@@ -20,6 +22,8 @@ export interface EditAccountDialogProps {
     accountSize: number;
     status: string;
     setStatus: (status: string) => void;
+    hasHftWarning: boolean;
+    setHasHftWarning: (val: boolean) => void;
     onUpdate: () => void;
 }
 
@@ -29,6 +33,7 @@ export interface PropAccount {
     accountType: string;
     accountSize: number;
     status: string;
+    hasHftWarning: boolean;
 }
 
 export interface AccountMetrics {
@@ -90,6 +95,8 @@ export interface AccountSetupCenterProps {
     setAccountSize: (val: number) => void;
     status: string;
     setStatus: (val: string) => void;
+    hasHftWarning: boolean;
+    setHasHftWarning: (val: boolean) => void;
     onCreate: () => void;
 }
 

@@ -19,7 +19,12 @@ const ObjectiveRules: React.FC<ObjectiveRulesProps> = ({ rules }) => {
                     <ProgressBar label="Profit Target" current={rules.profitTarget.current} max={rules.profitTarget.limit} isGood={true} />
                 )}
                 {rules.minDays?.limit !== undefined && rules.minDays.limit > 0 && (
-                    <ProgressBar label="Min Trading Days" current={rules.minDays.current} max={rules.minDays.limit} isGood={true} isCurrency={false} />
+                    <Box>
+                        <ProgressBar label="Min Trading Days" current={rules.minDays.current} max={rules.minDays.limit} isGood={true} isCurrency={false} />
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: -1.5, mb: 1.5, fontSize: '0.65rem', fontStyle: 'italic', opacity: 0.8 }}>
+                            * Only days with ±0.25% balance movement count
+                        </Typography>
+                    </Box>
                 )}
                 {rules.maxRisk?.isActive && (
                     <ProgressBar label="Max 3% Aggregated Risk" current={rules.maxRisk.currentPct ?? 0} max={100} isGood={false} isCurrency={false} />

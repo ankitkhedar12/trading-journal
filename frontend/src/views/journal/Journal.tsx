@@ -96,7 +96,7 @@ const Journal = () => {
 
     return (
         <Box className="journal-page">
-            <FloatingCard delay={0.1}>
+            <FloatingCard delay={0.1} sx={{ borderRadius: '30px' }}>
                 <Box className="journal-header">
                     <AutoAwesome sx={{ color: 'primary.main', mr: 2, fontSize: 32 }} />
                     <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Daily Reflections</Typography>
@@ -172,7 +172,7 @@ const Journal = () => {
                 </Paper>
             ) : (
                 entries.map((item, index) => (
-                    <FloatingCard key={item.id} delay={0.2 + (index * 0.1)} sx={{ p: 3 }}>
+                    <FloatingCard key={item.id} delay={0.2 + (index * 0.1)} sx={{ p: 3, borderRadius: '30px' }}>
                         <Box className="journal-entry-header">
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                 <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.dark', fontWeight: 'bold' }}>
