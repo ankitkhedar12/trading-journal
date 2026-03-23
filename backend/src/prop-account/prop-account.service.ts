@@ -19,10 +19,18 @@ export class PropAccountService {
     }
 
 
-    async getDashboard(userId: string) {
-        const account = await this.prisma.propAccount.findFirst({
-            where: { userId }
-        });
+    async getDashboard(userId: string, accountId?: string, phase?: string) {
+        let account;
+        if (accountId) {
+            account = await this.prisma.propAccount.findFirst({
+                where: { id: accountId, userId }
+            });
+        } else {
+            account = await this.prisma.propAccount.findFirst({
+                where: { userId },
+                orderBy: { createdAt: 'desc' }
+            });
+        }
 
         if (!account) return null;
 
@@ -30,8 +38,21 @@ export class PropAccountService {
         const brokerKey = account.firmName === 'The Funded Room' ? 'the_funded_room' :
             account.firmName === 'Vantage' ? 'vantage' : account.firmName;
 
+        let effectivePhase = phase;
+        if (!effectivePhase) {
+            const latestTrade = await this.prisma.trade.findFirst({
+                where: { propAccountId: account.id },
+                orderBy: { openedAt: 'desc' }
+            });
+            effectivePhase = latestTrade?.accountPhase || account.status;
+        }
+
         const allTrades = await this.prisma.trade.findMany({
-            where: { userId, broker: brokerKey },
+            where: { 
+                userId, 
+                propAccountId: account.id,
+                accountPhase: effectivePhase
+            },
             orderBy: { openedAt: 'asc' }
         });
 
@@ -147,15 +168,18 @@ export class PropAccountService {
 
         // Violation Detection (Max Risk)
         let maxRiskViolation = false;
+        let maxAdversePctPerSymbol = 0;
         if (maxRiskPerSymbolPct > 0) {
             for (const day in tradesByDayAndSymbol) {
                 for (const symbol in tradesByDayAndSymbol[day]) {
-                    if (tradesByDayAndSymbol[day][symbol] <= -maxRiskAllowedPerSymbol) {
+                    const realisedPnl = tradesByDayAndSymbol[day][symbol];
+                    const lossPct = (Math.abs(Math.min(0, realisedPnl)) / initialBalance) * 100;
+                    if (lossPct > maxAdversePctPerSymbol) maxAdversePctPerSymbol = lossPct;
+                    
+                    if (realisedPnl <= -maxRiskAllowedPerSymbol) {
                         maxRiskViolation = true;
-                        break;
                     }
                 }
-                if (maxRiskViolation) break;
             }
         }
 
@@ -219,9 +243,7 @@ export class PropAccountService {
 
         // If status or warning changed, save it
         if (updatedStatus !== account.status || updatedHftWarning !== account.hasHftWarning) {
-            if (updatedStatus !== account.status) {
-                await this.deleteTradesForFirm(userId, account.firmName);
-            }
+            // We no longer delete trades on status change to keep stage history.
             await this.prisma.propAccount.update({
                 where: { id: account.id },
                 data: { status: updatedStatus, hasHftWarning: updatedHftWarning }
@@ -269,7 +291,7 @@ export class PropAccountService {
                 profitTarget: { current: Math.max(0, currentNetProfit), limit: targetProfitVal, isActive: profitTargetPct > 0 },
                 consistency: { currentPct: consistencyScore, limitPct: 15, isActive: account.accountType === 'INSTANT' },
                 minDays: { current: validTradingDaysCount, limit: minDays },
-                maxRisk: { currentPct: maxRiskPerSymbolPct > 0 ? (maxRiskViolation ? 100 : 0) : 0, limitPct: maxRiskPerSymbolPct, isActive: maxRiskPerSymbolPct > 0 }
+                maxRisk: { current: parseFloat(maxAdversePctPerSymbol.toFixed(2)), limit: maxRiskPerSymbolPct, isActive: maxRiskPerSymbolPct > 0 }
             },
             chartData,
             profitCalendar
@@ -284,9 +306,7 @@ export class PropAccountService {
         if (!account) return null;
 
         const updateData: any = { ...data };
-        if (data.status && data.status !== account.status) {
-            await this.deleteTradesForFirm(userId, account.firmName);
-        }
+        // We no longer delete trades on status change, preserving history.
         
         // Remove id and userId from updateData to prevent issues
         delete updateData.id;

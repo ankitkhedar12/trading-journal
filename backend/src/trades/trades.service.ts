@@ -16,33 +16,61 @@ export class TradesService {
         }
     }
 
-    async importTrades(trades: any[], userId: string, broker: string) {
-        // Basic bulk insert or upsert using orderId to prevent duplicates
-        const results = [];
-        for (const trade of trades) {
-            const saved = await this.prisma.trade.upsert({
-                where: { orderId: trade.orderId },
-                update: {},
-                create: {
-                    symbol: trade.symbol,
-                    volume: String(trade.volume),
-                    entryPrice: typeof trade.entryPrice === 'number' ? trade.entryPrice : parseFloat(trade.entryPrice),
-                    closePrice: typeof trade.closePrice === 'number' ? trade.closePrice : parseFloat(trade.closePrice),
-                    pnl: typeof trade.pnl === 'number' ? trade.pnl : parseFloat(trade.pnl),
-                    netPnl: typeof trade.netPnl === 'number' ? trade.netPnl : parseFloat(trade.netPnl || trade.pnl),
-                    chargesSwap: trade.chargesSwap || '0.00/0.00',
-                    openedAt: new Date(this.parseDate(trade.openedAt)),
-                    closedAt: trade.closedAt ? new Date(this.parseDate(trade.closedAt)) : new Date(this.parseDate(trade.openedAt)),
-                    orderId: trade.orderId,
-                    status: trade.status || 'Closed',
-                    side: trade.side,
-                    broker,
-                    userId,
-                }
-            });
-            results.push(saved);
+    async importTrades(trades: any[], userId: string, broker: string, propAccountId?: string) {
+        // Collect all orderIds from the import batch
+        const orderIds = trades.map(t => t.orderId);
+
+        // Find which ones already exist in the DB for this user
+        const existingTrades = await this.prisma.trade.findMany({
+            where: {
+                userId,
+                orderId: { in: orderIds }
+            },
+            select: { orderId: true }
+        });
+
+        const existingSet = new Set(existingTrades.map(t => t.orderId));
+
+        // Filter out trades that are already in the database
+        const newTrades = trades.filter(t => !existingSet.has(t.orderId));
+
+        if (newTrades.length === 0) {
+            return { count: 0, message: 'All trades in this file have already been imported.' };
         }
-        return { count: results.length };
+
+        let accountPhase: string | null = null;
+        if (propAccountId) {
+            const account = await this.prisma.propAccount.findUnique({
+                where: { id: propAccountId }
+            });
+            if (account) {
+                accountPhase = account.status;
+            }
+        }
+
+        // Use createMany for high-performance bulk insertion of only the new trades
+        const result = await this.prisma.trade.createMany({
+            data: newTrades.map(trade => ({
+                symbol: trade.symbol,
+                volume: String(trade.volume),
+                entryPrice: typeof trade.entryPrice === 'number' ? trade.entryPrice : parseFloat(trade.entryPrice),
+                closePrice: typeof trade.closePrice === 'number' ? trade.closePrice : parseFloat(trade.closePrice),
+                pnl: typeof trade.pnl === 'number' ? trade.pnl : parseFloat(trade.pnl),
+                netPnl: typeof trade.netPnl === 'number' ? trade.netPnl : parseFloat(trade.netPnl || trade.pnl),
+                chargesSwap: trade.chargesSwap || '0.00/0.00',
+                openedAt: new Date(this.parseDate(trade.openedAt)),
+                closedAt: trade.closedAt ? new Date(this.parseDate(trade.closedAt)) : new Date(this.parseDate(trade.openedAt)),
+                orderId: trade.orderId,
+                status: trade.status || 'Closed',
+                side: trade.side,
+                broker,
+                userId,
+                propAccountId: propAccountId || null,
+                accountPhase: accountPhase,
+            }))
+        });
+
+        return { count: result.count };
     }
 
     async getDashboardStats(userId: string, broker?: string) {

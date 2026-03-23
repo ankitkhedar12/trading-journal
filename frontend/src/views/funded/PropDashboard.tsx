@@ -1,9 +1,10 @@
-import { Box, Typography, CircularProgress, Button, Grid, Chip, Alert } from '@mui/material';
+import { Box, Typography, CircularProgress, Button, Grid, Chip, Alert, Select, MenuItem } from '@mui/material';
 import { AnimatePresence } from 'framer-motion';
+import { toast } from 'react-toastify';
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContextType';
 import { getBaseUrl } from '../../utils/config';
-import { usePropDashboard, useInvalidateTrades, useAllTrades } from '../../hooks/useTradeQueries';
+import { usePropDashboard, useInvalidateTrades, useAllTrades, usePropAccounts } from '../../hooks/useTradeQueries';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { ShowChart } from '@mui/icons-material';
 import { getSecureHeaders } from '../../utils/security';
@@ -43,7 +44,33 @@ const PropDashboard = () => {
     const [selectedDay, setSelectedDay] = useState<Date | null>(null);
     const [showDayTrades, setShowDayTrades] = useState(false);
 
-    const { data: dashboardData = null, isLoading } = usePropDashboard();
+    // Account Selection State
+    const { data: propAccounts = [] } = usePropAccounts();
+    const [selectedAccountId, setSelectedAccountId] = useState<string>('');
+    const [selectedPhase, setSelectedPhase] = useState<string>('');
+
+    useEffect(() => {
+        if (propAccounts.length > 0 && !selectedAccountId) {
+            setSelectedAccountId(propAccounts[0].id);
+            setSelectedPhase(propAccounts[0].status);
+        }
+    }, [propAccounts, selectedAccountId]);
+
+    const handleAccountChange = (accountId: string) => {
+        const acc = propAccounts.find(a => a.id === accountId);
+        setSelectedAccountId(accountId);
+        setSelectedPhase(acc ? acc.status : '');
+    };
+
+    const getAvailablePhases = (accountId: string) => {
+        const acc = propAccounts.find(a => a.id === accountId);
+        if (!acc) return [];
+        if (acc.accountType === ACCOUNT_TYPES.INSTANT) return [ACCOUNT_STATUS.FUNDED, ACCOUNT_STATUS.FAILED].filter(p => p !== ACCOUNT_STATUS.FAILED || acc.status === ACCOUNT_STATUS.FAILED);
+        if (acc.accountType === ACCOUNT_TYPES.ONE_STEP) return [ACCOUNT_STATUS.PHASE_1, ACCOUNT_STATUS.FUNDED, ACCOUNT_STATUS.FAILED].filter(p => p !== ACCOUNT_STATUS.FAILED || acc.status === ACCOUNT_STATUS.FAILED);
+        return [ACCOUNT_STATUS.PHASE_1, ACCOUNT_STATUS.PHASE_2, ACCOUNT_STATUS.FUNDED, ACCOUNT_STATUS.FAILED].filter(p => p !== ACCOUNT_STATUS.FAILED || acc.status === ACCOUNT_STATUS.FAILED);
+    };
+
+    const { data: dashboardData = null, isLoading } = usePropDashboard(selectedAccountId, selectedPhase);
     const { data: tradesList = [] } = useAllTrades();
 
     // Pre-fill form when data loads
@@ -72,15 +99,20 @@ const PropDashboard = () => {
 
     const handleCreateAccount = async () => {
         try {
-            await fetch(`${getBaseUrl()}/api/prop-account`, {
+            const res = await fetch(`${getBaseUrl()}/api/prop-account`, {
                 method: 'POST',
                 headers: getSecureHeaders(user?.token),
                 body: JSON.stringify({ firmName, accountType, accountSize: Number(accountSize), status, hasHftWarning })
             });
-            setOpenSetup(false);
-            invalidatePropData();
+            if (res.ok) {
+                toast.success('Prop Firm Account created successfully!');
+                setOpenSetup(false);
+                invalidatePropData();
+            } else {
+                toast.error('Failed to create account.');
+            }
         } catch {
-            // Error handled server-side
+            toast.error('Network error occurred.');
         }
     };
 
@@ -136,7 +168,7 @@ const PropDashboard = () => {
         setShowDayTrades(true);
     };
 
-    if (isLoading) {
+    if (isLoading || (propAccounts.length > 0 && !dashboardData?.account)) {
         return <Box sx={{ display: 'flex', justifyContent: 'center', p: 10 }}><CircularProgress /></Box>;
     }
 
@@ -186,10 +218,40 @@ const PropDashboard = () => {
                     </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Button variant="contained" size="small" onClick={() => setOpenSetup(true)} sx={{ borderRadius: '10px !important' }}>+ New Account</Button>
                     <Button variant="outlined" size="small" onClick={() => setOpenEdit(true)} sx={{ borderRadius: '10px !important' }}>Edit Account</Button>
                     <Button variant="outlined" color="error" size="small" onClick={handleDeleteAccount} sx={{ borderRadius: '10px !important' }}>Delete</Button>
                 </Box>
             </Box>
+
+            {/* Account & Phase Selectors */}
+            {propAccounts.length > 0 && dashboardData?.account && (
+                <Box sx={{ display: 'flex', gap: 2, mb: 1, alignItems: 'center' }}>
+                    <Select
+                        size="small"
+                        value={selectedAccountId}
+                        onChange={(e) => handleAccountChange(e.target.value as string)}
+                        sx={{ borderRadius: '15px', minWidth: 200 }}
+                    >
+                        {propAccounts.map(acc => (
+                            <MenuItem key={acc.id} value={acc.id}>
+                                {acc.firmName} ({acc.accountType.replace('_', ' ')})
+                            </MenuItem>
+                        ))}
+                    </Select>
+                    
+                    <Select
+                        size="small"
+                        value={selectedPhase}
+                        onChange={(e) => setSelectedPhase(e.target.value as string)}
+                        sx={{ borderRadius: '15px', minWidth: 120 }}
+                    >
+                        {getAvailablePhases(selectedAccountId).map(p => (
+                            <MenuItem key={p} value={p}>{p.replace('_', ' ')}</MenuItem>
+                        ))}
+                    </Select>
+                </Box>
+            )}
 
             {/* Violation Alerts */}
             <AnimatePresence>

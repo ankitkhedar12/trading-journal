@@ -1,12 +1,12 @@
-import { useState, useRef } from 'react';
-import { Box, Typography, Paper, CircularProgress, ToggleButton, ToggleButtonGroup, Alert } from '@mui/material';
+import { useState, useRef, useEffect } from 'react';
+import { Box, Typography, Paper, CircularProgress, ToggleButton, ToggleButtonGroup, Alert, Select, MenuItem } from '@mui/material';
 import { motion, useAnimation } from 'framer-motion';
 import { PostAdd } from '@mui/icons-material';
 import Papa from 'papaparse';
 import { useAuth } from '../../context/AuthContextType';
 import { useNavigate } from 'react-router-dom';
 import { getBaseUrl } from '../../utils/config';
-import { useInvalidateTrades } from '../../hooks/useTradeQueries';
+import { useInvalidateTrades, usePropAccounts } from '../../hooks/useTradeQueries';
 import { validateFile, getSecureHeaders } from '../../utils/security';
 import { buildTradesFromOrders } from '../../utils/tradeImportUtils';
 
@@ -21,12 +21,22 @@ const ImportData = () => {
     const [isHovered, setIsHovered] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [selectedBroker, setSelectedBroker] = useState<string>(BROKERS.VANTAGE);
+    const [selectedAccountId, setSelectedAccountId] = useState<string>('');
     const [fileError, setFileError] = useState<string | null>(null);
     const dropControls = useAnimation();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { user } = useAuth();
     const navigate = useNavigate();
     const invalidateTrades = useInvalidateTrades();
+    const { data: propAccounts = [] } = usePropAccounts();
+
+    useEffect(() => {
+        if (selectedBroker === BROKERS.THE_FUNDED_ROOM && propAccounts.length > 0) {
+            if (!selectedAccountId) setSelectedAccountId(propAccounts[0].id);
+        } else {
+            setSelectedAccountId('');
+        }
+    }, [selectedBroker, propAccounts]);
 
     const parseVantageTrades = (rawData: Record<string, string>[]) => {
         return rawData.map((row) => {
@@ -173,12 +183,20 @@ const ImportData = () => {
                                 body: JSON.stringify({
                                     trades: formattedTrades,
                                     broker: selectedBroker,
+                                    propAccountId: selectedBroker === BROKERS.THE_FUNDED_ROOM ? selectedAccountId : undefined
                                 })
                             });
 
                             if (res.ok) {
+                                const data = await res.json();
+                                const count = data.count || 0;
                                 invalidateTrades();
-                                navigate('/reports');
+                                if (count === 0) {
+                                    setFileError(data.message || 'All trades in this file were already imported.');
+                                    setIsProcessing(false);
+                                } else {
+                                    navigate('/reports');
+                                }
                             } else {
                                 setFileError('Failed to upload trades. Please try again.');
                                 setIsProcessing(false);
@@ -203,6 +221,10 @@ const ImportData = () => {
     };
 
     const triggerFileInput = () => {
+        if (selectedBroker === BROKERS.THE_FUNDED_ROOM && (!selectedAccountId || propAccounts.length === 0)) {
+            setFileError('Please select or create a Prop Firm account first.');
+            return;
+        }
         fileInputRef.current?.click();
     };
 
@@ -266,6 +288,32 @@ const ImportData = () => {
                             </ToggleButton>
                         ))}
                     </ToggleButtonGroup>
+
+                    {selectedBroker === BROKERS.THE_FUNDED_ROOM && (
+                        <Box sx={{ mt: 4, textAlign: 'left' }}>
+                            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: 'text.secondary' }}>
+                                Select Prop Firm Account
+                            </Typography>
+                            {propAccounts.length === 0 ? (
+                                <Alert severity="warning" sx={{ borderRadius: '15px' }}>
+                                    You haven't created any Prop Firm accounts yet. Please go to the Funded Dashboard to set one up first.
+                                </Alert>
+                            ) : (
+                                <Select
+                                    fullWidth
+                                    value={selectedAccountId}
+                                    onChange={(e) => setSelectedAccountId(e.target.value as string)}
+                                    sx={{ borderRadius: '15px' }}
+                                >
+                                    {propAccounts.map(acc => (
+                                        <MenuItem key={acc.id} value={acc.id}>
+                                            {acc.firmName} - {acc.accountType.replace('_', ' ')} (${acc.accountSize.toLocaleString()}) - {acc.status.replace('_', ' ')}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            )}
+                        </Box>
+                    )}
                 </Paper>
 
                 <Paper
@@ -329,6 +377,7 @@ const ImportData = () => {
                         ref={fileInputRef}
                         style={{ display: 'none' }}
                         onChange={handleFileUpload}
+                        disabled={selectedBroker === BROKERS.THE_FUNDED_ROOM && (!selectedAccountId || propAccounts.length === 0)}
                     />
                 </Paper>
             </motion.div>

@@ -8,8 +8,8 @@ export class TradesController {
     constructor(private readonly tradesService: TradesService) { }
 
     @Post('import')
-    import(@Request() req: any, @Body() body: { trades: any[]; broker: string }) {
-        return this.tradesService.importTrades(body.trades, req.user.id, body.broker || 'vantage');
+    import(@Request() req: any, @Body() body: { trades: any[]; broker: string; propAccountId?: string }) {
+        return this.tradesService.importTrades(body.trades, req.user.id, body.broker || 'vantage', body.propAccountId);
     }
 
     @Get('dashboard')

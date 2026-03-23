@@ -27,7 +27,12 @@ const ObjectiveRules: React.FC<ObjectiveRulesProps> = ({ rules }) => {
                     </Box>
                 )}
                 {rules.maxRisk?.isActive && (
-                    <ProgressBar label="Max 3% Aggregated Risk" current={rules.maxRisk.currentPct ?? 0} max={100} isGood={false} isCurrency={false} />
+                    <Box>
+                        <ProgressBar label="Max 3% Symbol Risk (Day)" current={rules.maxRisk.current} max={rules.maxRisk.limit} isGood={false} isCurrency={false} />
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: -1.5, mb: 1.5, fontSize: '0.65rem', fontStyle: 'italic', opacity: 0.8 }}>
+                            * Max loss allowed per symbol per day (including SL)
+                        </Typography>
+                    </Box>
                 )}
 
                 {rules.consistency?.isActive && (
