@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContextType';
 import { getBaseUrl } from '../utils/config';
 import { getSecureHeaders } from '../utils/security';
 import type { Trade, DashboardStats } from '../types/trade';
-import type { PropDashboardData } from '../types/account';
+import type { PropDashboardData, PropAccount } from '../types/account';
 
 // Re-export types so consumers can import from one place
 export type { Trade, DashboardStats } from '../types/trade';
