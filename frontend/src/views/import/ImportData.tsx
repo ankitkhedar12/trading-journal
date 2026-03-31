@@ -99,9 +99,19 @@ const ImportData = () => {
             }
             
             // Standard multiplier estimation
-            if (t.pair.toUpperCase().includes('XAU')) pnlRaw *= 100;
-            else if (t.pair.toUpperCase().includes('BTC') || t.pair.toUpperCase().includes('US30') || t.pair.toUpperCase().includes('NAS')) pnlRaw *= 1;
-            else pnlRaw *= 100000;
+            const pairUpper = t.pair.toUpperCase();
+            let multiplier = 100000; // default for forex
+
+            const CRYPTOS = ['BTC', 'ETH', 'SOL', 'DOGE', 'LTC', 'XRP', 'ADA', 'DOT', 'LINK', 'BCH'];
+            const INDICES = ['US30', 'NAS', 'US100', 'SPX', 'GER30', 'UK100', 'FRA40', 'JPN225', 'AUS200', 'HK50'];
+
+            if (CRYPTOS.some(c => pairUpper.includes(c))) multiplier = 1;
+            else if (INDICES.some(i => pairUpper.includes(i))) multiplier = 1;
+            else if (pairUpper.includes('XAU')) multiplier = 100;
+            else if (pairUpper.includes('XAG')) multiplier = 5000;
+            else if (pairUpper.includes('WTI') || pairUpper.includes('USOIL') || pairUpper.includes('UKOIL')) multiplier = 1000;
+
+            pnlRaw *= multiplier;
 
             return {
                 symbol: t.pair,
