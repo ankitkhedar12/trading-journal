@@ -127,6 +127,21 @@ export class TradesService {
         });
     }
 
+    async updateTradePnl(tradeId: string, userId: string, newPnl: number) {
+        const trade = await this.prisma.trade.findFirst({
+            where: { id: tradeId, userId }
+        });
+
+        if (!trade) {
+            throw new Error('Trade not found or unauthorized');
+        }
+
+        return this.prisma.trade.update({
+            where: { id: tradeId },
+            data: { pnl: newPnl, netPnl: newPnl }
+        });
+    }
+
     private parseDate(dateStr: string) {
         if (!dateStr) return new Date().toISOString();
         dateStr = String(dateStr).trim();

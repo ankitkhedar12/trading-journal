@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, UseGuards, Request, Query } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, Param, UseGuards, Request, Query } from '@nestjs/common';
 import { TradesService } from './trades.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -20,6 +20,15 @@ export class TradesController {
     @Get()
     getTrades(@Request() req: any, @Query('broker') broker?: string) {
         return this.tradesService.getTrades(req.user.id, broker);
+    }
+
+    @Patch(':id/pnl')
+    updateTradePnl(
+        @Request() req: any,
+        @Param('id') id: string,
+        @Body() body: { pnl: number }
+    ) {
+        return this.tradesService.updateTradePnl(id, req.user.id, body.pnl);
     }
 }
 

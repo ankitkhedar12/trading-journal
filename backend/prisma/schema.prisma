@@ -38,6 +38,7 @@ model PropAccount {
   userId       String
   user         User     @relation(fields: [userId], references: [id])
   hasHftWarning Boolean @default(false)
+  balanceAdjustment Float @default(0)
   
   trades       Trade[]
 

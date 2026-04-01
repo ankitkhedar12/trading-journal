@@ -113,6 +113,40 @@ const ImportData = () => {
 
             pnlRaw *= multiplier;
 
+            // Convert PnL to USD if quote currency is not USD
+            let quoteCurrency = 'USD';
+            if (pairUpper.includes('/')) {
+                quoteCurrency = pairUpper.split('/')[1].trim();
+            } else if (pairUpper.length >= 6) {
+                quoteCurrency = pairUpper.substring(pairUpper.length - 3);
+            }
+
+            if (quoteCurrency !== 'USD') {
+                if (pairUpper.startsWith('USD/') || (pairUpper.length === 6 && pairUpper.startsWith('USD'))) {
+                    // Exact conversion using the exit price (which is the quote/USD rate)
+                    pnlRaw /= (t.avgExitPrice || 1);
+                } else {
+                    // Approximate conversion for cross pairs (e.g. EUR/JPY, GBP/CHF)
+                    const approxUSDExchangeRates: Record<string, number> = {
+                        'JPY': 150,     // 1 USD approx 150 JPY
+                        'CHF': 0.9,     // 1 USD approx 0.9 CHF
+                        'CAD': 1.35,    // 1 USD approx 1.35 CAD
+                        'AUD': 1.5,     // 1 USD approx 1.5 AUD
+                        'NZD': 1.6,     // 1 USD approx 1.6 NZD
+                        'GBP': 0.8,     // 1 USD approx 0.8 GBP
+                        'EUR': 0.92,    // 1 USD approx 0.92 EUR
+                        'KRW': 1350,    // 1 USD approx 1350 KRW
+                        'MXN': 17,      // 1 USD approx 17 MXN
+                        'ZAR': 18,      // 1 USD approx 18 ZAR
+                        'TRY': 32       // 1 USD approx 32 TRY
+                    };
+                    const rate = approxUSDExchangeRates[quoteCurrency];
+                    if (rate) {
+                        pnlRaw /= rate;
+                    }
+                }
+            }
+
             return {
                 symbol: t.pair,
                 volume: t.entryLot.toFixed(2),

@@ -58,7 +58,8 @@ export class PropAccountService {
 
         // 1. Base Metrics
         const initialBalance = account.accountSize;
-        let currentBalance = initialBalance;
+        const balanceAdj = account.balanceAdjustment || 0;
+        let currentBalance = initialBalance + balanceAdj;
         let totalProfit = 0;
         let maxSingleDayProfit = 0;
         let totalWinDays = 0;
@@ -145,7 +146,7 @@ export class PropAccountService {
         const todayStartStr = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString().split('T')[0];
 
         // Calculate balance at start of today for drawdown check
-        let balanceAtStartOfToday = initialBalance;
+        let balanceAtStartOfToday = initialBalance + balanceAdj;
         allTrades.forEach(trade => {
             const dayStr = trade.openedAt.toISOString().split('T')[0];
             if (dayStr < todayStartStr) {
@@ -259,7 +260,7 @@ export class PropAccountService {
         });
 
         const chartData: { date: string, value: number, symbol: string, tradePnl: number, fullDate: string, index: number }[] = [];
-        let runningEq = initialBalance;
+        let runningEq = initialBalance + balanceAdj;
         allTrades.forEach((trade, index) => {
             runningEq += trade.pnl;
             chartData.push({ 

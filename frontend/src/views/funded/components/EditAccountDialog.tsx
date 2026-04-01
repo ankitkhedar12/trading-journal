@@ -17,6 +17,8 @@ const EditAccountDialog: React.FC<EditAccountDialogProps> = ({
     setStatus,
     hasHftWarning,
     setHasHftWarning,
+    balanceAdjustment,
+    setBalanceAdjustment,
     onUpdate
 }) => {
     return (
@@ -64,6 +66,15 @@ const EditAccountDialog: React.FC<EditAccountDialogProps> = ({
                     <MenuItem value="FUNDED">Funded / Master</MenuItem>
                     <MenuItem value="FAILED" sx={{ color: 'error.main' }}>FAILED (Account Revoked)</MenuItem>
                 </TextField>
+
+                <TextField
+                    type="number"
+                    label="Account Balance Offset ($)"
+                    value={balanceAdjustment}
+                    onChange={(e) => setBalanceAdjustment(parseFloat(e.target.value) || 0)}
+                    fullWidth
+                    helperText="Manually adjust your total balance to align with exact missing CSV PnL or commissions."
+                />
                 
                 <FormControlLabel
                     control={

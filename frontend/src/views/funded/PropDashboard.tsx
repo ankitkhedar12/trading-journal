@@ -39,6 +39,7 @@ const PropDashboard = () => {
     const [accountSize, setAccountSize] = useState<number>(100000);
     const [status, setStatus] = useState<string>(ACCOUNT_STATUS.PHASE_1);
     const [hasHftWarning, setHasHftWarning] = useState<boolean>(false);
+    const [balanceAdjustment, setBalanceAdjustment] = useState<number>(0);
 
     // Day Selection State
     const [selectedDay, setSelectedDay] = useState<Date | null>(null);
@@ -81,6 +82,7 @@ const PropDashboard = () => {
             if (dashboardData.account.accountSize !== accountSize) setAccountSize(dashboardData.account.accountSize);
             if (dashboardData.account.status !== status) setStatus(dashboardData.account.status);
             if (dashboardData.account.hasHftWarning !== hasHftWarning) setHasHftWarning(dashboardData.account.hasHftWarning);
+            if (dashboardData.account.balanceAdjustment !== balanceAdjustment) setBalanceAdjustment(dashboardData.account.balanceAdjustment);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dashboardData?.account]);
@@ -102,7 +104,7 @@ const PropDashboard = () => {
             const res = await fetch(`${getBaseUrl()}/api/prop-account`, {
                 method: 'POST',
                 headers: getSecureHeaders(user?.token),
-                body: JSON.stringify({ firmName, accountType, accountSize: Number(accountSize), status, hasHftWarning })
+                body: JSON.stringify({ firmName, accountType, accountSize: Number(accountSize), status, hasHftWarning, balanceAdjustment })
             });
             if (res.ok) {
                 toast.success('Prop Firm Account created successfully!');
@@ -122,7 +124,7 @@ const PropDashboard = () => {
             const res = await fetch(`${getBaseUrl()}/api/prop-account/${dashboardData.account.id}`, {
                 method: 'POST',
                 headers: getSecureHeaders(user?.token),
-                body: JSON.stringify({ firmName, accountType, accountSize: Number(accountSize), status, hasHftWarning })
+                body: JSON.stringify({ firmName, accountType, accountSize: Number(accountSize), status, hasHftWarning, balanceAdjustment })
             });
             if (res.ok) {
                 setOpenEdit(false);
@@ -342,6 +344,8 @@ const PropDashboard = () => {
                 setStatus={setStatus}
                 hasHftWarning={hasHftWarning}
                 setHasHftWarning={setHasHftWarning}
+                balanceAdjustment={balanceAdjustment}
+                setBalanceAdjustment={setBalanceAdjustment}
                 onUpdate={handleUpdateAccount}
             />
             <DayTradesModal

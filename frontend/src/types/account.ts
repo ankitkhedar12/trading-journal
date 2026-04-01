@@ -24,6 +24,8 @@ export interface EditAccountDialogProps {
     setStatus: (status: string) => void;
     hasHftWarning: boolean;
     setHasHftWarning: (val: boolean) => void;
+    balanceAdjustment: number;
+    setBalanceAdjustment: (val: number) => void;
     onUpdate: () => void;
 }
 
@@ -34,6 +36,7 @@ export interface PropAccount {
     accountSize: number;
     status: string;
     hasHftWarning: boolean;
+    balanceAdjustment: number;
 }
 
 export interface AccountMetrics {

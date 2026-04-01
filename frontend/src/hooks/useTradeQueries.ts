@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContextType';
 import { getBaseUrl } from '../utils/config';
 import { getSecureHeaders } from '../utils/security';
@@ -60,4 +60,27 @@ export const useInvalidateTrades = () => {
         qc.invalidateQueries({ queryKey: ['propDashboard'] });
         qc.invalidateQueries({ queryKey: ['propAccounts'] });
     };
+};
+
+export const useUpdateTradePnl = () => {
+    const { user } = useAuth();
+    const invalidateTrades = useInvalidateTrades();
+
+    return useMutation({
+        mutationFn: async ({ tradeId, pnl }: { tradeId: string; pnl: number }) => {
+            const res = await fetch(`${getBaseUrl()}/api/trades/${tradeId}/pnl`, {
+                method: 'PATCH',
+                headers: {
+                    ...getSecureHeaders(user?.token),
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ pnl }),
+            });
+            if (!res.ok) throw new Error('Failed to update Trade PnL');
+            return res.json();
+        },
+        onSuccess: () => {
+            invalidateTrades();
+        },
+    });
 };
