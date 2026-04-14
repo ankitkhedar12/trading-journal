@@ -1,4 +1,5 @@
 export interface TooltipData {
+    value: any;
     date: string;
     fullDate?: string;
     symbol?: string;

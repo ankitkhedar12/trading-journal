@@ -2,8 +2,14 @@ import React from 'react';
 import { Box, Typography } from '@mui/material';
 
 import type { CustomTooltipProps } from '../../types/chart';
+import { Line } from 'recharts';
+import { useThemeContext } from '../../context/ThemeContextType';
 
 const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload }) => {
+    const { mode } = useThemeContext();
+    // Dynamic background based on mode and glassMode
+    const isDark = mode === 'dark';
+
     if (active && payload && payload.length) {
         const data = payload[0].payload;
         const isPositive = data.tradePnl >= 0;
@@ -21,7 +27,7 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload }) => {
                 <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}>
                     {data.fullDate || data.date}
                 </Typography>
-                <Box sx={{ pt: 1, borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+                <Box sx={{ pt: 1, borderTop: '1px solid rgba(0,0,0,0.05)', gap:1 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 'bold' }}>{data.symbol || 'Trade'}</Typography>
                         <Typography variant="body2" sx={{
@@ -29,6 +35,15 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload }) => {
                             color: isPositive ? 'success.main' : 'error.main'
                         }}>
                             {isPositive ? '+' : ''}${data.tradePnl?.toFixed(2) || '0.00'}
+                        </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap:2 }}>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 'bold' }}>{'Account Size'}</Typography>
+                        <Typography variant="caption" sx={{
+                            fontWeight: 'bold',
+                            color: isDark ? 'white' : 'black'
+                        }}>
+                            {isPositive ? '+' : ''}${data.value?.toFixed(2) || '0.00'}
                         </Typography>
                     </Box>
                 </Box>
