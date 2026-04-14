@@ -2,7 +2,6 @@ import React from 'react';
 import { Box, Typography } from '@mui/material';
 
 import type { CustomTooltipProps } from '../../types/chart';
-import { Line } from 'recharts';
 import { useThemeContext } from '../../context/ThemeContextType';
 
 const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload }) => {
