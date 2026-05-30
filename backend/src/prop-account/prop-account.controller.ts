@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, UseGuards, Request, Query } from '@nestjs/common';
 import { PropAccountService } from './prop-account.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -8,8 +8,8 @@ export class PropAccountController {
   constructor(private readonly propAccountService: PropAccountService) { }
 
   @Get('dashboard')
-  getDashboard(@Request() req: any) {
-    return this.propAccountService.getDashboard(req.user.id);
+  getDashboard(@Request() req: any, @Query('accountId') accountId?: string, @Query('phase') phase?: string) {
+    return this.propAccountService.getDashboard(req.user.id, accountId, phase);
   }
 
   @Get()

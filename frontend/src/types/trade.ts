@@ -13,6 +13,7 @@ export interface Trade {
     status: string;
     side?: 'Long' | 'Short';
     broker: string;
+    propAccountId?: string;
 }
 
 export interface ChartPoint {

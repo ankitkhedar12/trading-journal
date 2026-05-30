@@ -1,12 +1,12 @@
-import { useState, useRef } from 'react';
-import { Box, Typography, Paper, CircularProgress, ToggleButton, ToggleButtonGroup, Alert } from '@mui/material';
+import { useState, useRef, useEffect } from 'react';
+import { Box, Typography, Paper, CircularProgress, ToggleButton, ToggleButtonGroup, Alert, Select, MenuItem } from '@mui/material';
 import { motion, useAnimation } from 'framer-motion';
 import { PostAdd } from '@mui/icons-material';
 import Papa from 'papaparse';
 import { useAuth } from '../../context/AuthContextType';
 import { useNavigate } from 'react-router-dom';
 import { getBaseUrl } from '../../utils/config';
-import { useInvalidateTrades } from '../../hooks/useTradeQueries';
+import { useInvalidateTrades, usePropAccounts } from '../../hooks/useTradeQueries';
 import { validateFile, getSecureHeaders } from '../../utils/security';
 import { buildTradesFromOrders } from '../../utils/tradeImportUtils';
 
@@ -21,12 +21,22 @@ const ImportData = () => {
     const [isHovered, setIsHovered] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [selectedBroker, setSelectedBroker] = useState<string>(BROKERS.VANTAGE);
+    const [selectedAccountId, setSelectedAccountId] = useState<string>('');
     const [fileError, setFileError] = useState<string | null>(null);
     const dropControls = useAnimation();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { user } = useAuth();
     const navigate = useNavigate();
     const invalidateTrades = useInvalidateTrades();
+    const { data: propAccounts = [] } = usePropAccounts();
+
+    useEffect(() => {
+        if (selectedBroker === BROKERS.THE_FUNDED_ROOM && propAccounts.length > 0) {
+            if (!selectedAccountId) setSelectedAccountId(propAccounts[0].id);
+        } else {
+            setSelectedAccountId('');
+        }
+    }, [selectedBroker, propAccounts]);
 
     const parseVantageTrades = (rawData: Record<string, string>[]) => {
         return rawData.map((row) => {
@@ -89,9 +99,53 @@ const ImportData = () => {
             }
             
             // Standard multiplier estimation
-            if (t.pair.toUpperCase().includes('XAU')) pnlRaw *= 100;
-            else if (t.pair.toUpperCase().includes('BTC') || t.pair.toUpperCase().includes('US30') || t.pair.toUpperCase().includes('NAS')) pnlRaw *= 1;
-            else pnlRaw *= 100000;
+            const pairUpper = t.pair.toUpperCase();
+            let multiplier = 100000; // default for forex
+
+            const CRYPTOS = ['BTC', 'ETH', 'SOL', 'DOGE', 'LTC', 'XRP', 'ADA', 'DOT', 'LINK', 'BCH'];
+            const INDICES = ['US30', 'NAS', 'US100', 'SPX', 'GER30', 'UK100', 'FRA40', 'JPN225', 'AUS200', 'HK50'];
+
+            if (CRYPTOS.some(c => pairUpper.includes(c))) multiplier = 1;
+            else if (INDICES.some(i => pairUpper.includes(i))) multiplier = 1;
+            else if (pairUpper.includes('XAU')) multiplier = 100;
+            else if (pairUpper.includes('XAG')) multiplier = 5000;
+            else if (pairUpper.includes('WTI') || pairUpper.includes('USOIL') || pairUpper.includes('UKOIL')) multiplier = 1000;
+
+            pnlRaw *= multiplier;
+
+            // Convert PnL to USD if quote currency is not USD
+            let quoteCurrency = 'USD';
+            if (pairUpper.includes('/')) {
+                quoteCurrency = pairUpper.split('/')[1].trim();
+            } else if (pairUpper.length >= 6) {
+                quoteCurrency = pairUpper.substring(pairUpper.length - 3);
+            }
+
+            if (quoteCurrency !== 'USD') {
+                if (pairUpper.startsWith('USD/') || (pairUpper.length === 6 && pairUpper.startsWith('USD'))) {
+                    // Exact conversion using the exit price (which is the quote/USD rate)
+                    pnlRaw /= (t.avgExitPrice || 1);
+                } else {
+                    // Approximate conversion for cross pairs (e.g. EUR/JPY, GBP/CHF)
+                    const approxUSDExchangeRates: Record<string, number> = {
+                        'JPY': 150,     // 1 USD approx 150 JPY
+                        'CHF': 0.9,     // 1 USD approx 0.9 CHF
+                        'CAD': 1.35,    // 1 USD approx 1.35 CAD
+                        'AUD': 1.5,     // 1 USD approx 1.5 AUD
+                        'NZD': 1.6,     // 1 USD approx 1.6 NZD
+                        'GBP': 0.8,     // 1 USD approx 0.8 GBP
+                        'EUR': 0.92,    // 1 USD approx 0.92 EUR
+                        'KRW': 1350,    // 1 USD approx 1350 KRW
+                        'MXN': 17,      // 1 USD approx 17 MXN
+                        'ZAR': 18,      // 1 USD approx 18 ZAR
+                        'TRY': 32       // 1 USD approx 32 TRY
+                    };
+                    const rate = approxUSDExchangeRates[quoteCurrency];
+                    if (rate) {
+                        pnlRaw /= rate;
+                    }
+                }
+            }
 
             return {
                 symbol: t.pair,
@@ -173,12 +227,20 @@ const ImportData = () => {
                                 body: JSON.stringify({
                                     trades: formattedTrades,
                                     broker: selectedBroker,
+                                    propAccountId: selectedBroker === BROKERS.THE_FUNDED_ROOM ? selectedAccountId : undefined
                                 })
                             });
 
                             if (res.ok) {
+                                const data = await res.json();
+                                const count = data.count || 0;
                                 invalidateTrades();
-                                navigate('/reports');
+                                if (count === 0) {
+                                    setFileError(data.message || 'All trades in this file were already imported.');
+                                    setIsProcessing(false);
+                                } else {
+                                    navigate('/reports');
+                                }
                             } else {
                                 setFileError('Failed to upload trades. Please try again.');
                                 setIsProcessing(false);
@@ -203,6 +265,10 @@ const ImportData = () => {
     };
 
     const triggerFileInput = () => {
+        if (selectedBroker === BROKERS.THE_FUNDED_ROOM && (!selectedAccountId || propAccounts.length === 0)) {
+            setFileError('Please select or create a Prop Firm account first.');
+            return;
+        }
         fileInputRef.current?.click();
     };
 
@@ -266,6 +332,32 @@ const ImportData = () => {
                             </ToggleButton>
                         ))}
                     </ToggleButtonGroup>
+
+                    {selectedBroker === BROKERS.THE_FUNDED_ROOM && (
+                        <Box sx={{ mt: 4, textAlign: 'left' }}>
+                            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: 'text.secondary' }}>
+                                Select Prop Firm Account
+                            </Typography>
+                            {propAccounts.length === 0 ? (
+                                <Alert severity="warning" sx={{ borderRadius: '15px' }}>
+                                    You haven't created any Prop Firm accounts yet. Please go to the Funded Dashboard to set one up first.
+                                </Alert>
+                            ) : (
+                                <Select
+                                    fullWidth
+                                    value={selectedAccountId}
+                                    onChange={(e) => setSelectedAccountId(e.target.value as string)}
+                                    sx={{ borderRadius: '15px' }}
+                                >
+                                    {propAccounts.map(acc => (
+                                        <MenuItem key={acc.id} value={acc.id}>
+                                            {acc.firmName} - {acc.accountType.replace('_', ' ')} (${acc.accountSize.toLocaleString()}) - {acc.status.replace('_', ' ')}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            )}
+                        </Box>
+                    )}
                 </Paper>
 
                 <Paper
@@ -329,6 +421,7 @@ const ImportData = () => {
                         ref={fileInputRef}
                         style={{ display: 'none' }}
                         onChange={handleFileUpload}
+                        disabled={selectedBroker === BROKERS.THE_FUNDED_ROOM && (!selectedAccountId || propAccounts.length === 0)}
                     />
                 </Paper>
             </motion.div>

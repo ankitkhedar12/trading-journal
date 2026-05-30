@@ -38,7 +38,10 @@ model PropAccount {
   userId       String
   user         User     @relation(fields: [userId], references: [id])
   hasHftWarning Boolean @default(false)
+  balanceAdjustment Float @default(0)
   
+  trades       Trade[]
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -62,6 +65,10 @@ model Trade {
   userId       String?
   user         User?    @relation(fields: [userId], references: [id])
   
+  propAccountId String?
+  propAccount   PropAccount? @relation(fields: [propAccountId], references: [id], onDelete: Cascade)
+  accountPhase  String?  // e.g "PHASE_1", "PHASE_2", "FUNDED"
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

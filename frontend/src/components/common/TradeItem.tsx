@@ -1,13 +1,28 @@
-import React from 'react';
-import { Box, Typography, Paper } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Typography, Paper, IconButton, TextField, CircularProgress } from '@mui/material';
+import { Edit, Check, Close } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useThemeContext } from '../../context/ThemeContextType';
+import { useUpdateTradePnl } from '../../hooks/useTradeQueries';
 
 import type { TradeItemProps } from '../../types/trade';
 
 const TradeItem: React.FC<TradeItemProps> = ({ trade, index, isViolation, violationType }) => {
     const { mode } = useThemeContext();
     const isDark = mode === 'dark';
+    
+    const [isEditing, setIsEditing] = useState(false);
+    const [editPnl, setEditPnl] = useState(trade.pnl.toString());
+    const { mutate: updatePnl, isPending } = useUpdateTradePnl();
+
+    const handleSave = () => {
+        const val = parseFloat(editPnl);
+        if (!isNaN(val)) {
+            updatePnl({ tradeId: trade.id, pnl: val }, {
+                onSuccess: () => setIsEditing(false)
+            });
+        }
+    };
 
     const getPnlColor = (pnl: number) => {
         return pnl > 0 ? '#4caf50' : pnl < 0 ? '#f44336' : '#9e9e9eff';
@@ -106,9 +121,47 @@ const TradeItem: React.FC<TradeItemProps> = ({ trade, index, isViolation, violat
                     {trade.entryPrice} &rarr; {trade.closePrice}
                 </Typography>
 
-                <Typography variant="body2" sx={{ flex: 1, fontWeight: 'bold', color: getPnlColor(trade.pnl) }}>
-                    {trade.pnl > 0 ? '+' : ''}{trade.pnl.toFixed(2)}
-                </Typography>
+                <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    {isEditing ? (
+                        <>
+                            <TextField
+                                variant="standard"
+                                size="small"
+                                autoFocus
+                                value={editPnl}
+                                onChange={(e) => setEditPnl(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSave();
+                                    if (e.key === 'Escape') {
+                                      setIsEditing(false);
+                                      setEditPnl(trade.pnl.toString());
+                                    }
+                                }}
+                                InputProps={{
+                                    disableUnderline: true,
+                                    sx: { color: 'text.primary', fontSize: '0.9rem', width: '60px', bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', px: 0.5, borderRadius: 1 }
+                                }}
+                            />
+                            {isPending ? <CircularProgress size={16} /> : (
+                                <IconButton size="small" onClick={handleSave} color="success" sx={{ p: 0.2 }}>
+                                    <Check fontSize="small" />
+                                </IconButton>
+                            )}
+                            <IconButton size="small" onClick={() => { setIsEditing(false); setEditPnl(trade.pnl.toString()); }} color="error" sx={{ p: 0.2 }} disabled={isPending}>
+                                <Close fontSize="small" />
+                            </IconButton>
+                        </>
+                    ) : (
+                        <>
+                            <Typography variant="body2" sx={{ fontWeight: 'bold', color: getPnlColor(trade.pnl) }}>
+                                {trade.pnl > 0 ? '+' : ''}{trade.pnl.toFixed(2)}
+                            </Typography>
+                            <IconButton size="small" onClick={() => setIsEditing(true)} sx={{ opacity: 0, '.report-trade-row:hover &': { opacity: 0.5 }, transition: 'opacity 0.2s', p: 0.2 }}>
+                                <Edit sx={{ fontSize: '0.9rem' }} />
+                            </IconButton>
+                        </>
+                    )}
+                </Box>
 
                 <Typography variant="body2" sx={{ flex: 1, color: 'text.secondary' }}>
                     {duration}
