@@ -48,6 +48,10 @@ export interface AccountMetrics {
     totalTrades: number;
     totalWinDays: number;
     totalLossDays: number;
+    profitFactor?: number;
+    riskRewardRatio?: number;
+    bestTrade?: number;
+    worstTrade?: number;
 }
 
 export interface RuleDetail {

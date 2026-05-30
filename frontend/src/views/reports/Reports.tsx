@@ -15,11 +15,15 @@ const Reports = () => {
     const [sortKey, setSortKey] = useState<SortKey>('Date');
     const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
+    const vantageAccounts = useMemo(() => {
+        return propAccounts.filter(acc => acc.firmName === 'Vantage');
+    }, [propAccounts]);
+
     useEffect(() => {
-        if (propAccounts.length > 0 && selectedAccountId === 'ALL') {
+        if (vantageAccounts.length > 0 && selectedAccountId === 'ALL') {
              // You can explicitly default to 'ALL'
         }
-    }, [propAccounts]);
+    }, [vantageAccounts]);
 
     const sortedTrades = useMemo(() => {
         if (!trades) return [];
@@ -80,20 +84,20 @@ const Reports = () => {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
                 <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Trade Reports</Typography>
                 
-                {propAccounts.length > 0 && (
+                {vantageAccounts.length > 0 && (
                     <FormControl size="small" sx={{ minWidth: 200 }}>
-                        <InputLabel id="account-select-label">Platform / Account</InputLabel>
+                        <InputLabel id="account-select-label">Account</InputLabel>
                         <Select
                             labelId="account-select-label"
                             value={selectedAccountId}
-                            label="Platform / Account"
+                            label="Account"
                             onChange={(e) => setSelectedAccountId(e.target.value)}
                             sx={{ borderRadius: '15px' }}
                         >
-                            <MenuItem value="ALL">All Platforms</MenuItem>
-                            {propAccounts.map(acc => (
+                            <MenuItem value="ALL">All Vantage Accounts</MenuItem>
+                            {vantageAccounts.map(acc => (
                                 <MenuItem key={acc.id} value={acc.id}>
-                                    {acc.firmName} ({acc.accountType.replace('_', ' ')})
+                                    Vantage ({acc.accountType})
                                 </MenuItem>
                             ))}
                         </Select>

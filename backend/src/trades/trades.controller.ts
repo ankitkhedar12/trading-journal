@@ -1,27 +1,30 @@
-import { Controller, Post, Get, Patch, Body, Param, UseGuards, Request, Query } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, Param, UseGuards, Request, Query, HttpCode } from '@nestjs/common';
 import { TradesService } from './trades.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
-@UseGuards(JwtAuthGuard)
 @Controller('api/trades')
 export class TradesController {
     constructor(private readonly tradesService: TradesService) { }
 
+    @UseGuards(JwtAuthGuard)
     @Post('import')
     import(@Request() req: any, @Body() body: { trades: any[]; broker: string; propAccountId?: string }) {
         return this.tradesService.importTrades(body.trades, req.user.id, body.broker || 'vantage', body.propAccountId);
     }
 
+    @UseGuards(JwtAuthGuard)
     @Get('dashboard')
     getDashboardStats(@Request() req: any, @Query('broker') broker?: string) {
         return this.tradesService.getDashboardStats(req.user.id, broker);
     }
 
+    @UseGuards(JwtAuthGuard)
     @Get()
     getTrades(@Request() req: any, @Query('broker') broker?: string) {
         return this.tradesService.getTrades(req.user.id, broker);
     }
 
+    @UseGuards(JwtAuthGuard)
     @Patch(':id/pnl')
     updateTradePnl(
         @Request() req: any,
@@ -29,6 +32,14 @@ export class TradesController {
         @Body() body: { pnl: number }
     ) {
         return this.tradesService.updateTradePnl(id, req.user.id, body.pnl);
+    }
+
+    @Post('webhook')
+    @HttpCode(200)
+    async handleWebhook(@Body() body: any) {
+        // The webhook payload from MT5 EA will not have a JWT.
+        // It will just send the accountId and trade details.
+        return this.tradesService.processWebhookTrade(body);
     }
 }
 

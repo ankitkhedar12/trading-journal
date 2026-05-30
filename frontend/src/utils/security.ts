@@ -122,8 +122,8 @@ export const clearAuthSession = (): void => {
 
 // ─── File Validation ───────────────────────────────────
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_FILE_TYPES = ['text/csv', 'application/vnd.ms-excel'];
-const ALLOWED_EXTENSIONS = ['.csv'];
+const ALLOWED_FILE_TYPES = ['text/csv', 'application/vnd.ms-excel', 'text/html', 'text/htm', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+const ALLOWED_EXTENSIONS = ['.csv', '.html', '.htm', '.xlsx'];
 
 /**
  * Validate an uploaded file for type, size, and extension.
@@ -133,13 +133,13 @@ export const validateFile = (file: File): string | null => {
   const extension = '.' + file.name.split('.').pop()?.toLowerCase();
 
   if (!ALLOWED_EXTENSIONS.includes(extension)) {
-    return `Invalid file type. Only CSV files are allowed.`;
+    return `Invalid file type. Only CSV, HTML, and XLSX files are allowed.`;
   }
 
   if (file.type && !ALLOWED_FILE_TYPES.includes(file.type) && file.type !== '') {
     // Some browsers don't set type for CSV, so also check extension
     if (!ALLOWED_EXTENSIONS.includes(extension)) {
-      return `Invalid file type "${file.type}". Only CSV files are allowed.`;
+      return `Invalid file type "${file.type}". Only CSV, HTML, and XLSX files are allowed.`;
     }
   }
 
@@ -148,7 +148,7 @@ export const validateFile = (file: File): string | null => {
   }
 
   if (file.size === 0) {
-    return 'File is empty. Please select a valid CSV file.';
+    return 'File is empty. Please select a valid file.';
   }
 
   return null;

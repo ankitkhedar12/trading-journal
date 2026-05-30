@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Box, Typography, Paper, CircularProgress, ToggleButton, ToggleButtonGroup, Alert, Select, MenuItem } from '@mui/material';
 import { motion, useAnimation } from 'framer-motion';
 import { PostAdd } from '@mui/icons-material';
@@ -30,13 +30,19 @@ const ImportData = () => {
     const invalidateTrades = useInvalidateTrades();
     const { data: propAccounts = [] } = usePropAccounts();
 
+    const vantageAccounts = useMemo(() => {
+        return propAccounts.filter(acc => acc.firmName === 'Vantage');
+    }, [propAccounts]);
+
     useEffect(() => {
-        if (selectedBroker === BROKERS.THE_FUNDED_ROOM && propAccounts.length > 0) {
-            if (!selectedAccountId) setSelectedAccountId(propAccounts[0].id);
+        if (vantageAccounts.length > 0) {
+            if (!selectedAccountId || !vantageAccounts.find(a => a.id === selectedAccountId)) {
+                setSelectedAccountId(vantageAccounts[0].id);
+            }
         } else {
             setSelectedAccountId('');
         }
-    }, [selectedBroker, propAccounts]);
+    }, [vantageAccounts, selectedAccountId]);
 
     const parseVantageTrades = (rawData: Record<string, string>[]) => {
         return rawData.map((row) => {
@@ -164,6 +170,70 @@ const ImportData = () => {
         }).filter(t => t !== null);
     };
 
+    const parseMT5HtmlReport = (htmlStr: string) => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlStr, 'text/html');
+        const rows = doc.querySelectorAll('tr');
+        const trades: any[] = [];
+
+        let inPositionsSection = false;
+
+        rows.forEach(row => {
+            const cells = Array.from(row.querySelectorAll('td')).filter(c => !c.classList.contains('hidden'));
+            
+            // Check if we entered the Positions section
+            const thB = row.querySelector('th b')?.textContent;
+            if (thB === 'Positions' || thB === 'Closed Transactions') {
+                inPositionsSection = true;
+                return;
+            }
+            if (thB === 'Orders' || thB === 'Deals' || thB === 'Open Positions') {
+                inPositionsSection = false;
+                return;
+            }
+
+            if (inPositionsSection && cells.length >= 13) {
+                // Potential trade row
+                const timeOpenStr = cells[0]?.textContent?.trim();
+                // Match "YYYY.MM.DD HH:MM:SS"
+                if (timeOpenStr && /^\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2}$/.test(timeOpenStr)) {
+                    // Extract fields
+                    const orderId = cells[1]?.textContent?.trim();
+                    const symbol = cells[2]?.textContent?.trim();
+                    const type = cells[3]?.textContent?.trim();
+                    const volume = cells[4]?.textContent?.trim();
+                    const priceOpen = cells[5]?.textContent?.trim();
+                    const sl = cells[6]?.textContent?.trim();
+                    const tp = cells[7]?.textContent?.trim();
+                    const timeCloseStr = cells[8]?.textContent?.trim();
+                    const priceClose = cells[9]?.textContent?.trim();
+                    const commission = cells[10]?.textContent?.trim();
+                    const swap = cells[11]?.textContent?.trim();
+                    const profit = cells[12]?.textContent?.trim();
+
+                    if (orderId && timeCloseStr && timeCloseStr !== 'cancelled') { // only closed trades
+                        trades.push({
+                            symbol: symbol?.replace(/[\r\n\s]+/g, ''),
+                            volume: volume,
+                            entryPrice: parseFloat(priceOpen?.replace(/,/g, '') || '0'),
+                            closePrice: parseFloat(priceClose?.replace(/,/g, '') || '0'),
+                            pnl: parseFloat(profit?.replace(/,/g, '') || '0'),
+                            netPnl: parseFloat(profit?.replace(/,/g, '') || '0') + parseFloat(commission?.replace(/,/g, '') || '0') + parseFloat(swap?.replace(/,/g, '') || '0'),
+                            chargesSwap: `${commission}/${swap}`,
+                            openedAt: timeOpenStr,
+                            closedAt: timeCloseStr,
+                            orderId: orderId,
+                            status: 'Closed',
+                            side: type?.toLowerCase() === 'sell' ? 'Short' : 'Long'
+                        });
+                    }
+                }
+            }
+        });
+
+        return trades;
+    };
+
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -192,6 +262,47 @@ const ImportData = () => {
                 }
 
                 text = text.replace(/\0/g, '');
+
+                if (file.name.toLowerCase().endsWith('.html') || file.name.toLowerCase().endsWith('.htm')) {
+                    setIsProcessing(true);
+                    const formattedTrades = parseMT5HtmlReport(text);
+
+                    if (formattedTrades.length === 0) {
+                        setFileError('No valid trades found in the HTML file. Please check the MT5 report format.');
+                        setIsProcessing(false);
+                        return;
+                    }
+
+                    fetch(`${getBaseUrl()}/api/trades/import`, {
+                        method: 'POST',
+                        headers: getSecureHeaders(user?.token),
+                        body: JSON.stringify({
+                            trades: formattedTrades,
+                            broker: selectedBroker,
+                            propAccountId: selectedAccountId || undefined
+                        })
+                    }).then(async res => {
+                        if (res.ok) {
+                            const data = await res.json();
+                            const count = data.count || 0;
+                            invalidateTrades();
+                            if (count === 0) {
+                                setFileError(data.message || 'All trades in this file were already imported.');
+                                setIsProcessing(false);
+                            } else {
+                                navigate('/reports');
+                            }
+                        } else {
+                            setFileError('Failed to upload trades. Please try again.');
+                            setIsProcessing(false);
+                        }
+                    }).catch(() => {
+                        setFileError('An error occurred while processing the file.');
+                        setIsProcessing(false);
+                    });
+                    
+                    return;
+                }
 
                 const firstLines = text.split('\n').slice(0, 5).join('\n');
                 const detectedDelimiter = (firstLines.match(/\t/g)?.length || 0) > (firstLines.match(/,/g)?.length || 0) ? '\t' : ',';
@@ -227,7 +338,7 @@ const ImportData = () => {
                                 body: JSON.stringify({
                                     trades: formattedTrades,
                                     broker: selectedBroker,
-                                    propAccountId: selectedBroker === BROKERS.THE_FUNDED_ROOM ? selectedAccountId : undefined
+                                    propAccountId: selectedAccountId || undefined
                                 })
                             });
 
@@ -265,8 +376,8 @@ const ImportData = () => {
     };
 
     const triggerFileInput = () => {
-        if (selectedBroker === BROKERS.THE_FUNDED_ROOM && (!selectedAccountId || propAccounts.length === 0)) {
-            setFileError('Please select or create a Prop Firm account first.');
+        if (!selectedAccountId || vantageAccounts.length === 0) {
+            setFileError('Please select or create a Vantage account first.');
             return;
         }
         fileInputRef.current?.click();
@@ -296,68 +407,29 @@ const ImportData = () => {
                         </Typography>
                     </Box>
 
-                    <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: 'text.secondary' }}>
-                        Select Broker / Firm
-                    </Typography>
-                    <ToggleButtonGroup
-                        value={selectedBroker}
-                        exclusive
-                        onChange={(_, val) => { if (val) setSelectedBroker(val); }}
-                        fullWidth
-                        sx={{
-                            gap: 2,
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            '& .MuiToggleButton-root': {
-                                flex: 1,
-                                textTransform: 'none',
-                                fontWeight: 600,
-                                fontSize: '1rem',
-                                py: 2,
-                                borderRadius: '15px !important',
-                                border: '1px solid !important',
-                                borderColor: 'divider',
-                                '&.Mui-selected': {
-                                    bgcolor: 'primary.main',
-                                    color: 'white',
-                                    borderColor: 'primary.main',
-                                    '&:hover': { bgcolor: 'primary.dark' },
-                                },
-                            },
-                        }}
-                    >
-                        {Object.keys(BROKER_LABELS).map(key => (
-                            <ToggleButton key={key} value={key}>
-                                {BROKER_LABELS[key]}
-                            </ToggleButton>
-                        ))}
-                    </ToggleButtonGroup>
-
-                    {selectedBroker === BROKERS.THE_FUNDED_ROOM && (
-                        <Box sx={{ mt: 4, textAlign: 'left' }}>
-                            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: 'text.secondary' }}>
-                                Select Prop Firm Account
-                            </Typography>
-                            {propAccounts.length === 0 ? (
-                                <Alert severity="warning" sx={{ borderRadius: '15px' }}>
-                                    You haven't created any Prop Firm accounts yet. Please go to the Funded Dashboard to set one up first.
-                                </Alert>
-                            ) : (
-                                <Select
-                                    fullWidth
-                                    value={selectedAccountId}
-                                    onChange={(e) => setSelectedAccountId(e.target.value as string)}
-                                    sx={{ borderRadius: '15px' }}
-                                >
-                                    {propAccounts.map(acc => (
-                                        <MenuItem key={acc.id} value={acc.id}>
-                                            {acc.firmName} - {acc.accountType.replace('_', ' ')} (${acc.accountSize.toLocaleString()}) - {acc.status.replace('_', ' ')}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            )}
-                        </Box>
-                    )}
+                    <Box sx={{ mt: 2, textAlign: 'left' }}>
+                        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: 'text.secondary' }}>
+                            Select Vantage Account
+                        </Typography>
+                        {vantageAccounts.length === 0 ? (
+                            <Alert severity="warning" sx={{ borderRadius: '15px' }}>
+                                You haven't created any Vantage accounts yet. Please go to the Dashboard to set one up first.
+                            </Alert>
+                        ) : (
+                            <Select
+                                fullWidth
+                                value={selectedAccountId}
+                                onChange={(e) => setSelectedAccountId(e.target.value as string)}
+                                sx={{ borderRadius: '15px' }}
+                            >
+                                {vantageAccounts.map(acc => (
+                                    <MenuItem key={acc.id} value={acc.id}>
+                                        Vantage ({acc.accountType}) - Starting Balance: ${acc.accountSize.toLocaleString()}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        )}
+                    </Box>
                 </Paper>
 
                 <Paper
@@ -417,11 +489,11 @@ const ImportData = () => {
 
                     <input
                         type="file"
-                        accept=".csv"
+                        accept=".csv,.html,.htm,.xlsx"
                         ref={fileInputRef}
                         style={{ display: 'none' }}
                         onChange={handleFileUpload}
-                        disabled={selectedBroker === BROKERS.THE_FUNDED_ROOM && (!selectedAccountId || propAccounts.length === 0)}
+                        disabled={!selectedAccountId || vantageAccounts.length === 0}
                     />
                 </Paper>
             </motion.div>

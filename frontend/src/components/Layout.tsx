@@ -136,7 +136,6 @@ const Layout = () => {
                         {/* Dynamic Render for Dock Items */}
                         {[
                             { path: '/dashboard', icon: <DashboardIcon />, label: 'Dashboard' },
-                            { path: '/funded', icon: <AutoGraphIcon />, label: 'Funded' },
                             { path: '/journal', icon: <JournalIcon />, label: 'Journal' },
                             { path: '/reports', icon: <ReportsIcon />, label: 'Reports' },
                             { path: '/import', icon: <FileUploadIcon />, label: 'Import' },

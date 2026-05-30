@@ -16,6 +16,58 @@ export class TradesService {
         }
     }
 
+    async processWebhookTrade(data: any) {
+        if (!data || !data.accountId || !data.orderId) {
+            throw new Error('Invalid webhook payload');
+        }
+
+        const propAccount = await this.prisma.propAccount.findUnique({
+            where: { id: data.accountId }
+        });
+
+        if (!propAccount) {
+            throw new Error('Prop account not found');
+        }
+
+        const existingTrade = await this.prisma.trade.findFirst({
+            where: {
+                userId: propAccount.userId,
+                orderId: data.orderId
+            }
+        });
+
+        if (existingTrade) {
+            return { message: 'Trade already exists' };
+        }
+
+        const openedAt = data.openTime ? new Date(Number(data.openTime) * 1000) : new Date();
+        const closedAt = data.closeTime ? new Date(Number(data.closeTime) * 1000) : new Date();
+
+        const trade = await this.prisma.trade.create({
+            data: {
+                symbol: data.symbol,
+                volume: String(data.volume),
+                entryPrice: data.entryPrice,
+                closePrice: data.closePrice,
+                pnl: data.pnl,
+                netPnl: data.pnl + (data.commission || 0) + (data.swap || 0),
+                chargesSwap: `${(data.commission || 0).toFixed(2)}/${(data.swap || 0).toFixed(2)}`,
+                openedAt,
+                closedAt,
+                orderId: data.orderId,
+                status: 'Closed',
+                side: data.side,
+                broker: propAccount.firmName === 'Vantage' ? 'vantage' : propAccount.firmName.toLowerCase(),
+                userId: propAccount.userId,
+                propAccountId: propAccount.id,
+                accountPhase: propAccount.firmName === 'Vantage' ? null : propAccount.status
+            }
+        });
+
+        return { message: 'Trade processed successfully', trade };
+    }
+
+
     async importTrades(trades: any[], userId: string, broker: string, propAccountId?: string) {
         // Collect all orderIds from the import batch
         const orderIds = trades.map(t => t.orderId);
