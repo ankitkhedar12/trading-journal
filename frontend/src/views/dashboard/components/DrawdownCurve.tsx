@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface DrawdownData {
@@ -31,7 +31,7 @@ const DrawdownCurve: React.FC<DrawdownCurveProps> = ({ data }) => {
                         contentStyle={{ backgroundColor: '#1E293B', color: '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}
                         itemStyle={{ color: '#fff' }}
                         labelStyle={{ color: '#fff' }}
-                        formatter={(value: number) => [`$${value.toFixed(2)}`, 'Drawdown']}
+                        formatter={(value: any) => [`${Number(value).toFixed(2)}`, 'Drawdown'] as any}
                         labelFormatter={(label) => `Date: ${label}`}
                     />
                     <Area 

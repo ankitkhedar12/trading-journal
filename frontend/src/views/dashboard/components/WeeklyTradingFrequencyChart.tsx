@@ -32,7 +32,7 @@ const WeeklyTradingFrequencyChart: React.FC<WeeklyTradingFrequencyChartProps> = 
                         contentStyle={{ backgroundColor: '#1E293B', color: '#fff', borderRadius: '4px', border: 'none' }}
                         itemStyle={{ color: '#fff' }}
                         labelStyle={{ color: '#fff' }}
-                        formatter={(value: number) => [value, 'Trades']}
+                        formatter={(value: any) => [value, 'Trades'] as any}
                     />
                     <Bar dataKey="total" fill="#68d391" radius={[0, 4, 4, 0]} barSize={20} />
                 </BarChart>

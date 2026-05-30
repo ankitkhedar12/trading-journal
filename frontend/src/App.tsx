@@ -3,7 +3,6 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Layout from './components/Layout';
 import Dashboard from './views/dashboard/Dashboard';
-import PropDashboard from './views/funded/PropDashboard';
 import ImportData from './views/import/ImportData';
 import Login from './views/auth/Login';
 import Signup from './views/auth/Signup';

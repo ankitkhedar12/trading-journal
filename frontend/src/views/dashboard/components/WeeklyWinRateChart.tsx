@@ -34,7 +34,7 @@ const WeeklyWinRateChart: React.FC<WeeklyWinRateChartProps> = ({ data }) => {
                         contentStyle={{ backgroundColor: '#1E293B', color: '#fff', borderRadius: '4px', border: 'none' }}
                         itemStyle={{ color: '#fff' }}
                         labelStyle={{ color: '#fff' }}
-                        formatter={(value: number) => [`${value}%`, 'Win Rate']}
+                        formatter={(value: any) => [`${value}%`, 'Win Rate'] as any}
                     />
                     <Bar dataKey="winRate" fill="#68d391" radius={[0, 4, 4, 0]} barSize={20} />
                 </BarChart>

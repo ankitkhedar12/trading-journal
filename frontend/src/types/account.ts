@@ -52,6 +52,8 @@ export interface AccountMetrics {
     riskRewardRatio?: number;
     bestTrade?: number;
     worstTrade?: number;
+    avgHoldingTime?: string;
+    perTradeExpectancy?: number;
 }
 
 export interface RuleDetail {
@@ -89,6 +91,7 @@ export interface PropDashboardData {
     rules: PropRules;
     chartData: ChartDataPoint[];
     profitCalendar: CalendarDataPoint[];
+    advancedMetrics?: any;
 }
 
 export interface AccountSetupCenterProps {

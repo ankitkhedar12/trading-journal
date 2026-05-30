@@ -1,0 +1,26 @@
+{
+  "name": "trading-journal",
+  "version": "1.0.0",
+  "description": "A professional trading journal designed for prop firm traders (specifically \"The Funded Room\"). It automatically reconstructs trades from MT5 order histories and monitors for HFT/Hedging violations.",
+  "main": "test_parse.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ankitkhedar12/trading-journal.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/ankitkhedar12/trading-journal/issues"
+  },
+  "homepage": "https://github.com/ankitkhedar12/trading-journal#readme",
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0"
+  }
+}

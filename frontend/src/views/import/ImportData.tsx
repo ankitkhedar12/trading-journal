@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Box, Typography, Paper, CircularProgress, ToggleButton, ToggleButtonGroup, Alert, Select, MenuItem } from '@mui/material';
+import { Box, Typography, Paper, CircularProgress, Alert, Select, MenuItem } from '@mui/material';
 import { motion, useAnimation } from 'framer-motion';
 import { PostAdd } from '@mui/icons-material';
 import Papa from 'papaparse';
@@ -20,7 +20,7 @@ const BROKER_LABELS: Record<string, string> = {
 const ImportData = () => {
     const [isHovered, setIsHovered] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [selectedBroker, setSelectedBroker] = useState<string>(BROKERS.VANTAGE);
+    const [selectedBroker] = useState<string>(BROKERS.VANTAGE);
     const [selectedAccountId, setSelectedAccountId] = useState<string>('');
     const [fileError, setFileError] = useState<string | null>(null);
     const dropControls = useAnimation();
@@ -203,8 +203,6 @@ const ImportData = () => {
                     const type = cells[3]?.textContent?.trim();
                     const volume = cells[4]?.textContent?.trim();
                     const priceOpen = cells[5]?.textContent?.trim();
-                    const sl = cells[6]?.textContent?.trim();
-                    const tp = cells[7]?.textContent?.trim();
                     const timeCloseStr = cells[8]?.textContent?.trim();
                     const priceClose = cells[9]?.textContent?.trim();
                     const commission = cells[10]?.textContent?.trim();

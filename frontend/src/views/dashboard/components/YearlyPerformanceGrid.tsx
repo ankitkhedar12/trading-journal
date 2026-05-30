@@ -44,7 +44,7 @@ const YearlyPerformanceGrid: React.FC<YearlyPerformanceGridProps> = ({ data }) =
                                         yearlyTrades += monthData.count;
                                     }
                                     const isPositive = monthData && monthData.pnl >= 0;
-                                    const isNegative = monthData && monthData.pnl < 0;
+                                    // const isNegative = monthData && monthData.pnl < 0;
 
                                     return (
                                         <TableCell key={index} align="center" sx={{ borderBottom: 'none', p: 0.5 }}>

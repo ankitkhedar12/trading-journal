@@ -44,7 +44,7 @@ const HourlyWinRateChart: React.FC<HourlyWinRateChartProps> = ({ data }) => {
                         contentStyle={{ backgroundColor: '#1E293B', color: '#fff', borderRadius: '4px', border: 'none' }}
                         itemStyle={{ color: '#fff' }}
                         labelStyle={{ color: '#fff' }}
-                        formatter={(value: number) => [`${value}%`, 'Win Rate']}
+                        formatter={(value: any) => [`${value}%`, 'Win Rate'] as any}
                         labelFormatter={(label) => `Hour: ${label}`}
                     />
                     <Area 

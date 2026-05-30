@@ -9,7 +9,6 @@ import {
     AutoStories as JournalIcon,
     BarChart as ReportsIcon,
     Settings as SettingsIcon,
-    AutoGraph as AutoGraphIcon,
     Logout
 } from '@mui/icons-material';
 import { useThemeContext } from '../context/ThemeContextType';

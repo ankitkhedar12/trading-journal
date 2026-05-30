@@ -38,7 +38,7 @@ const ProfitByMonthChart: React.FC<ProfitByMonthChartProps> = ({ data }) => {
                         contentStyle={{ backgroundColor: '#1E293B', color: '#fff', borderRadius: '4px', border: 'none' }}
                         itemStyle={{ color: '#fff' }}
                         labelStyle={{ color: '#fff' }}
-                        formatter={(value: number) => [`$${value.toLocaleString()}`, 'P&L']}
+                        formatter={(value: any) => [`${Number(value).toLocaleString()}`, 'P&L'] as any}
                     />
                     <ReferenceLine y={0} stroke="#888" strokeOpacity={0.5} />
                     <Bar dataKey="pnl" radius={[4, 4, 0, 0]}>

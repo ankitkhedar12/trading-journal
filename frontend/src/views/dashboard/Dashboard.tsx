@@ -12,14 +12,11 @@ import { toast } from 'react-toastify';
 import FloatingCard from '../../components/common/FloatingCard';
 import ProfitCalendar from '../../components/common/ProfitCalendar';
 import DayTradesModal from '../../components/common/DayTradesModal';
-import AccountMatrix from '../funded/components/AccountMatrix';
 
 import SetupVantageAccountDialog from './components/SetupVantageAccountDialog';
 import EditVantageAccountDialog from './components/EditVantageAccountDialog';
 import VantageSetupCenter from './components/VantageSetupCenter';
-import WinRateGauge from './components/WinRateGauge';
 import DrawdownCurve from './components/DrawdownCurve';
-import TopSymbolsList from './components/TopSymbolsList';
 import TimeAnalysisCharts from './components/TimeAnalysisCharts';
 import YearlyPerformanceGrid from './components/YearlyPerformanceGrid';
 import WeeklyWinRateChart from './components/WeeklyWinRateChart';

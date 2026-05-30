@@ -2,7 +2,6 @@ import React from 'react';
 import { Box, Typography, Divider } from '@mui/material';
 import { Analytics, TrendingUp, TrendingDown, Toll, Security } from '@mui/icons-material';
 import FloatingCard from '../../../components/common/FloatingCard';
-import AccountStatsCard from '../../../components/common/AccountStatsCard';
 
 import type { AccountMetrics } from '../../../types/account';
 
