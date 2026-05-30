@@ -14,4 +14,4 @@ import { PropAccountModule } from './prop-account/prop-account.module';
     PropAccountModule,
   ],
 })
-export class AppModule { }
+export class AppModule {}

@@ -4,23 +4,26 @@ import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class MailService {
-    private transporter: nodemailer.Transporter;
-    private fromEmail: string;
+  private transporter: nodemailer.Transporter;
+  private fromEmail: string;
 
-    constructor(private configService: ConfigService) {
-        this.fromEmail = this.configService.get<string>('GMAIL_USER', '');
+  constructor(private configService: ConfigService) {
+    this.fromEmail = this.configService.get<string>('GMAIL_USER', '');
 
-        this.transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: this.fromEmail,
-                pass: this.configService.get<string>('GMAIL_APP_PASSWORD', ''),
-            },
-        });
-    }
+    this.transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: this.fromEmail,
+        pass: this.configService.get<string>('GMAIL_APP_PASSWORD', ''),
+      },
+    });
+  }
 
-    async sendSignupVerificationCode(toEmail: string, code: string): Promise<void> {
-        const htmlContent = `
+  async sendSignupVerificationCode(
+    toEmail: string,
+    code: string,
+  ): Promise<void> {
+    const htmlContent = `
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 24px; background: linear-gradient(135deg, #0f172a, #1e293b); border-radius: 16px; color: #f8fafc;">
             <div style="text-align: center; margin-bottom: 32px;">
                 <h1 style="font-size: 28px; font-weight: bold; color: #00e676; margin: 0;">AntiGrav</h1>
@@ -38,25 +41,25 @@ export class MailService {
             </p>
         </div>`;
 
-        const textContent = `Welcome to AntiGrav!\n\nYour verification code is: ${code}\n\nThis code expires in 10 minutes.`;
+    const textContent = `Welcome to AntiGrav!\n\nYour verification code is: ${code}\n\nThis code expires in 10 minutes.`;
 
-        try {
-            await this.transporter.sendMail({
-                from: `"AntiGrav" <${this.fromEmail}>`,
-                to: toEmail,
-                subject: 'Verify your AntiGrav Account',
-                html: htmlContent,
-                text: textContent,
-            });
-            console.log(`Signup verification email sent to ${toEmail}`);
-        } catch (error) {
-            console.error('Failed to send signup email:', error);
-            throw new Error('Failed to send verification email.');
-        }
+    try {
+      await this.transporter.sendMail({
+        from: `"AntiGrav" <${this.fromEmail}>`,
+        to: toEmail,
+        subject: 'Verify your AntiGrav Account',
+        html: htmlContent,
+        text: textContent,
+      });
+      console.log(`Signup verification email sent to ${toEmail}`);
+    } catch (error) {
+      console.error('Failed to send signup email:', error);
+      throw new Error('Failed to send verification email.');
     }
+  }
 
-    async sendResetCode(toEmail: string, code: string): Promise<void> {
-        const htmlContent = `
+  async sendResetCode(toEmail: string, code: string): Promise<void> {
+    const htmlContent = `
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 24px; background: linear-gradient(135deg, #0f172a, #1e293b); border-radius: 16px; color: #f8fafc;">
             <div style="text-align: center; margin-bottom: 32px;">
                 <h1 style="font-size: 28px; font-weight: bold; color: #64b5f6; margin: 0;">AntiGrav</h1>                <p style="color: #94a3b8; margin-top: 8px; font-size: 14px;">Password Reset Request</p>
@@ -73,20 +76,20 @@ export class MailService {
             </p>
         </div>`;
 
-        const textContent = `AntiGrav - Password Reset\n\nYour verification code is: ${code}\n\nThis code expires in 10 minutes.\n\nIf you did not request this, please ignore this email.`;
+    const textContent = `AntiGrav - Password Reset\n\nYour verification code is: ${code}\n\nThis code expires in 10 minutes.\n\nIf you did not request this, please ignore this email.`;
 
-        try {
-            await this.transporter.sendMail({
-                from: `"AntiGrav Support" <${this.fromEmail}>`,
-                to: toEmail,
-                subject: 'AntiGrav — Password Reset Code',
-                html: htmlContent,
-                text: textContent,
-            });
-            console.log(`Reset code email sent to ${toEmail}`);
-        } catch (error) {
-            console.error('Failed to send reset email:', error);
-            throw new Error('Failed to send reset email. Please try again later.');
-        }
+    try {
+      await this.transporter.sendMail({
+        from: `"AntiGrav Support" <${this.fromEmail}>`,
+        to: toEmail,
+        subject: 'AntiGrav — Password Reset Code',
+        html: htmlContent,
+        text: textContent,
+      });
+      console.log(`Reset code email sent to ${toEmail}`);
+    } catch (error) {
+      console.error('Failed to send reset email:', error);
+      throw new Error('Failed to send reset email. Please try again later.');
     }
+  }
 }

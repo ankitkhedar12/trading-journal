@@ -1,14 +1,28 @@
-import { Controller, Get, Post, Delete, Body, Param, UseGuards, Request, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+  Query,
+} from '@nestjs/common';
 import { PropAccountService } from './prop-account.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @UseGuards(JwtAuthGuard)
 @Controller('api/prop-account')
 export class PropAccountController {
-  constructor(private readonly propAccountService: PropAccountService) { }
+  constructor(private readonly propAccountService: PropAccountService) {}
 
   @Get('dashboard')
-  getDashboard(@Request() req: any, @Query('accountId') accountId?: string, @Query('phase') phase?: string) {
+  getDashboard(
+    @Request() req: any,
+    @Query('accountId') accountId?: string,
+    @Query('phase') phase?: string,
+  ) {
     return this.propAccountService.getDashboard(req.user.id, accountId, phase);
   }
 
@@ -28,7 +42,11 @@ export class PropAccountController {
   }
 
   @Post(':id') // Using POST for update since some setups might not have PUT configured, but @Put is better. Let's use @Post for simplicity or @Put if standard.
-  updateAccount(@Request() req: any, @Param('id') id: string, @Body() body: any) {
+  updateAccount(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body() body: any,
+  ) {
     return this.propAccountService.updateAccount(req.user.id, id, body);
   }
 }

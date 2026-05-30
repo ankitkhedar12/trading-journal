@@ -9,19 +9,21 @@ import { JwtStrategy } from './jwt.strategy';
 import { MailService } from './mail.service';
 
 @Module({
-    imports: [
-        PassportModule,
-        JwtModule.registerAsync({
-            imports: [ConfigModule],
-            useFactory: (configService: ConfigService) => ({
-                secret: configService.get<string>('JWT_SECRET', 'antigravity_secret_key'),
-                signOptions: { expiresIn: '7d' },
-            }),
-            inject: [ConfigService],
-        }),
-    ],
-    controllers: [AuthController],
-    providers: [AuthService, PrismaService, JwtStrategy, MailService],
+  imports: [
+    PassportModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>(
+          'JWT_SECRET',
+          'antigravity_secret_key',
+        ),
+        signOptions: { expiresIn: '7d' },
+      }),
+      inject: [ConfigService],
+    }),
+  ],
+  controllers: [AuthController],
+  providers: [AuthService, PrismaService, JwtStrategy, MailService],
 })
-export class AuthModule { }
-
+export class AuthModule {}
