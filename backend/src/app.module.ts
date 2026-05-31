@@ -5,6 +5,9 @@ import { JournalModule } from './journal/journal.module';
 import { TradesModule } from './trades/trades.module';
 import { PropAccountModule } from './prop-account/prop-account.module';
 
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -13,5 +16,7 @@ import { PropAccountModule } from './prop-account/prop-account.module';
     TradesModule,
     PropAccountModule,
   ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule { }
