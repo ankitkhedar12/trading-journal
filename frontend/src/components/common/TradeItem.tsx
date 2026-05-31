@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import { Box, Typography, Paper, IconButton, TextField, CircularProgress } from '@mui/material';
-import { Edit, Check, Close } from '@mui/icons-material';
+import { Edit, Check, Close, MenuBook } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useThemeContext } from '../../context/ThemeContextType';
 import { useUpdateTradePnl } from '../../hooks/useTradeQueries';
 
 import type { TradeItemProps } from '../../types/trade';
 
-const TradeItem: React.FC<TradeItemProps> = ({ trade, index, isViolation, violationType }) => {
+interface ExtendedTradeItemProps extends TradeItemProps {
+    onOpenJournal?: () => void;
+}
+
+const TradeItem: React.FC<ExtendedTradeItemProps> = ({ trade, index, isViolation, violationType, onOpenJournal }) => {
     const { mode } = useThemeContext();
     const isDark = mode === 'dark';
     
@@ -156,9 +160,14 @@ const TradeItem: React.FC<TradeItemProps> = ({ trade, index, isViolation, violat
                             <Typography variant="body2" sx={{ fontWeight: 'bold', color: getPnlColor(trade.pnl) }}>
                                 {trade.pnl > 0 ? '+' : ''}{trade.pnl.toFixed(2)}
                             </Typography>
-                            <IconButton size="small" onClick={() => setIsEditing(true)} sx={{ opacity: 0, '.report-trade-row:hover &': { opacity: 0.5 }, transition: 'opacity 0.2s', p: 0.2 }}>
-                                <Edit sx={{ fontSize: '0.9rem' }} />
-                            </IconButton>
+                            <Box sx={{ display: 'flex', opacity: 0, '.report-trade-row:hover &': { opacity: 0.8 }, transition: 'opacity 0.2s' }}>
+                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); setIsEditing(true); }} sx={{ p: 0.2 }}>
+                                    <Edit sx={{ fontSize: '0.9rem' }} />
+                                </IconButton>
+                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); onOpenJournal?.(); }} sx={{ p: 0.2 }}>
+                                    <MenuBook sx={{ fontSize: '0.9rem' }} color="primary" />
+                                </IconButton>
+                            </Box>
                         </>
                     )}
                 </Box>

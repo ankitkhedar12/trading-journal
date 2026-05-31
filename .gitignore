@@ -8,3 +8,5 @@ node_modules/
 
 # DB
 backend/prisma/*.db
+
+.agents/

@@ -84,7 +84,9 @@ const ImportData = () => {
                 if (!isNaN(dOpened.getTime())) {
                     isoOpenedDate = dOpened.toISOString();
                 }
-            } catch {}
+            } catch {
+                // Ignore parse errors
+            }
 
             try {
                 const cleanClosedStr = t.exitTime.replace(/GMT/g, '').replace(/,/g, '');
@@ -92,7 +94,9 @@ const ImportData = () => {
                 if (!isNaN(dClosed.getTime())) {
                     isoClosedDate = dClosed.toISOString();
                 }
-            } catch {}
+            } catch {
+                // Ignore parse errors
+            }
 
             if (!isoOpenedDate || !isoClosedDate) return null;
 
@@ -174,7 +178,7 @@ const ImportData = () => {
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlStr, 'text/html');
         const rows = doc.querySelectorAll('tr');
-        const trades: any[] = [];
+        const trades: Record<string, any>[] = [];
 
         let inPositionsSection = false;
 

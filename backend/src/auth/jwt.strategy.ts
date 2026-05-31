@@ -5,16 +5,18 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-    constructor(private configService: ConfigService) {
-        super({
-            jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-            ignoreExpiration: false,
-            secretOrKey: configService.get<string>('JWT_SECRET', 'antigravity_secret_key'),
-        });
-    }
+  constructor(private configService: ConfigService) {
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false,
+      secretOrKey: configService.get<string>(
+        'JWT_SECRET',
+        'antigravity_secret_key',
+      ),
+    });
+  }
 
-    async validate(payload: any) {
-        return { id: payload.sub, email: payload.email };
-    }
+  async validate(payload: any) {
+    return { id: payload.sub, email: payload.email };
+  }
 }
-

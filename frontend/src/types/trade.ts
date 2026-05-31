@@ -14,6 +14,14 @@ export interface Trade {
     side?: 'Long' | 'Short';
     broker: string;
     propAccountId?: string;
+    
+    // Journal fields
+    notes?: string;
+    rating?: number;
+    tags?: string[];
+    strategy?: string;
+    takeProfit?: number;
+    stopLoss?: number;
 }
 
 export interface ChartPoint {
@@ -23,10 +31,36 @@ export interface ChartPoint {
 
 export interface DashboardStats {
     chartData: ChartPoint[];
+    scatterData?: { id: string; volume: number; pnl: number; durationMinutes: number }[];
+    histogramData?: { range: string; count: number }[];
+    behavioralStats?: { winAfterWin: number; lossAfterWin: number; winAfterLoss: number; lossAfterLoss: number };
     quickStats: {
         total: number;
         winRate: string;
         largestLoss: string;
+        largestProfit?: string;
+        avgWin?: string;
+        avgLoss?: string;
+        avgTradePnl?: string;
+        totalWins?: number;
+        totalLosses?: number;
+        totalBreakEven?: number;
+        profitFactor?: string;
+        expectedPayoff?: string;
+        avgWinDurationMs?: number;
+        avgLossDurationMs?: number;
+    };
+    streaks?: {
+        maxWins: number;
+        maxLosses: number;
+    };
+    breakdowns?: {
+        symbols?: Record<string, { trades: number, win: number, loss: number, pnl: number }>;
+        strategies?: Record<string, { trades: number, win: number, loss: number, pnl: number }>;
+        tags?: Record<string, { trades: number, win: number, loss: number, pnl: number }>;
+        longShort?: Record<string, { trades: number, win: number, loss: number, pnl: number }>;
+        dayOfWeek?: Record<string, { trades: number, win: number, loss: number, pnl: number }>;
+        hourOfDay?: Record<string, { trades: number, win: number, loss: number, pnl: number }>;
     };
 }
 

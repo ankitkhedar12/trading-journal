@@ -28,8 +28,8 @@ function useApi<T>(key: readonly unknown[], endpoint: string, options?: { enable
 
 // ─── Typed hooks ───
 
-export const useDashboardStats = (broker: string) =>
-    useApi<DashboardStats>(['dashboardStats', broker], `/api/trades/dashboard?broker=${broker}`);
+export const useDashboardStats = (accountId: string) =>
+    useApi<DashboardStats>(['dashboardStats', accountId], `/api/trades/dashboard?accountId=${accountId}`);
 
 export const useTrades = (broker: string) =>
     useApi<Trade[]>(['trades', broker], `/api/trades?broker=${broker}`);
@@ -77,6 +77,29 @@ export const useUpdateTradePnl = () => {
                 body: JSON.stringify({ pnl }),
             });
             if (!res.ok) throw new Error('Failed to update Trade PnL');
+            return res.json();
+        },
+        onSuccess: () => {
+            invalidateTrades();
+        },
+    });
+};
+
+export const useUpdateTrade = () => {
+    const { user } = useAuth();
+    const invalidateTrades = useInvalidateTrades();
+
+    return useMutation({
+        mutationFn: async ({ tradeId, data }: { tradeId: string; data: Partial<Trade> }) => {
+            const res = await fetch(`${getBaseUrl()}/api/trades/${tradeId}`, {
+                method: 'PUT',
+                headers: {
+                    ...getSecureHeaders(user?.token),
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+            if (!res.ok) throw new Error('Failed to update Trade');
             return res.json();
         },
         onSuccess: () => {

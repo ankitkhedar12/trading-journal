@@ -4,7 +4,7 @@ import { JournalController } from './journal.controller';
 import { PrismaService } from '../prisma.service';
 
 @Module({
-    controllers: [JournalController],
-    providers: [JournalService, PrismaService],
+  controllers: [JournalController],
+  providers: [JournalService, PrismaService],
 })
-export class JournalModule { }
+export class JournalModule {}
