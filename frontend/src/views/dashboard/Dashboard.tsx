@@ -235,10 +235,10 @@ const Dashboard = () => {
                 </Box>
             )}
 
-            <Grid container spacing={4}>
+            <Grid container spacing={2}>
                 {/* Row 1: Key Metrics Summary */}
                 <Grid size={{ xs: 12, md: 2 }} sx={{ display: 'flex' }}>
-                    <FloatingCard delay={0.1} sx={{ flexGrow: 1, p: 2 }}>
+                    <FloatingCard delay={0.1} sx={{ flexGrow: 1, p: 2, borderRadius: '22px' }}>
                         <Typography variant="body2" color="text.secondary">Net P&L</Typography>
                         <Typography variant="h5" fontWeight="bold" color={metrics.totalPnl >= 0 ? 'success.main' : 'error.main'}>
                             ${metrics.totalPnl.toFixed(2)}
@@ -246,7 +246,7 @@ const Dashboard = () => {
                     </FloatingCard>
                 </Grid>
                 <Grid size={{ xs: 12, md: 2 }} sx={{ display: 'flex' }}>
-                    <FloatingCard delay={0.2} sx={{ flexGrow: 1, p: 2 }}>
+                    <FloatingCard delay={0.2} sx={{ flexGrow: 1, p: 2, borderRadius: '22px' }}>
                         <Typography variant="body2" color="text.secondary">Win Rate</Typography>
                         <Typography variant="h5" fontWeight="bold" color="info.main">
                             {metrics.winRate}
@@ -254,7 +254,7 @@ const Dashboard = () => {
                     </FloatingCard>
                 </Grid>
                 <Grid size={{ xs: 12, md: 2 }} sx={{ display: 'flex' }}>
-                    <FloatingCard delay={0.3} sx={{ flexGrow: 1, p: 2 }}>
+                    <FloatingCard delay={0.3} sx={{ flexGrow: 1, p: 2, borderRadius: '22px' }}>
                         <Typography variant="body2" color="text.secondary">Profit Factor</Typography>
                         <Typography variant="h5" fontWeight="bold">
                             {metrics.profitFactor}
@@ -262,7 +262,7 @@ const Dashboard = () => {
                     </FloatingCard>
                 </Grid>
                 <Grid size={{ xs: 12, md: 2 }} sx={{ display: 'flex' }}>
-                    <FloatingCard delay={0.4} sx={{ flexGrow: 1, p: 2 }}>
+                    <FloatingCard delay={0.4} sx={{ flexGrow: 1, p: 2, borderRadius: '22px' }}>
                         <Typography variant="body2" color="text.secondary">Total Trades</Typography>
                         <Typography variant="h5" fontWeight="bold">
                             {metrics.totalTrades}
@@ -270,7 +270,7 @@ const Dashboard = () => {
                     </FloatingCard>
                 </Grid>
                 <Grid size={{ xs: 12, md: 2 }} sx={{ display: 'flex' }}>
-                    <FloatingCard delay={0.5} sx={{ flexGrow: 1, p: 2 }}>
+                    <FloatingCard delay={0.5} sx={{ flexGrow: 1, p: 2, borderRadius: '22px' }}>
                         <Typography variant="body2" color="text.secondary">Risk Reward</Typography>
                         <Typography variant="h5" fontWeight="bold">
                             1:{metrics.riskRewardRatio}
@@ -278,7 +278,7 @@ const Dashboard = () => {
                     </FloatingCard>
                 </Grid>
                 <Grid size={{ xs: 12, md: 2 }} sx={{ display: 'flex' }}>
-                    <FloatingCard delay={0.6} sx={{ flexGrow: 1, p: 2 }}>
+                    <FloatingCard delay={0.6} sx={{ flexGrow: 1, p: 2, borderRadius: '22px' }}>
                         <Typography variant="body2" color="text.secondary">Avg Holding Time</Typography>
                         <Typography variant="h5" fontWeight="bold">
                             {metrics.avgHoldingTime || '0h 0m'}

@@ -13,10 +13,10 @@ interface TimeAnalysisChartsProps {
     timeOfDayData: TimeData[];
 }
 
-const TimeAnalysisCharts: React.FC<TimeAnalysisChartsProps> = ({ durationData, timeOfDayData }) => {
+const TimeAnalysisCharts: React.FC<TimeAnalysisChartsProps> = ({ durationData }) => {
     return (
         <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <Box sx={{ height: 200 }}>
+            {/* <Box sx={{ height: 200 }}>
                 <Typography variant="body2" color="text.secondary" mb={1}>PnL by Time of Day (Hour)</Typography>
                 <ResponsiveContainer width="100%" height="100%">
                     <ScatterChart margin={{ top: 10, right: 10, bottom: 0, left: -20 }}>
@@ -45,7 +45,7 @@ const TimeAnalysisCharts: React.FC<TimeAnalysisChartsProps> = ({ durationData, t
                         <Scatter name="Trades" data={timeOfDayData} fill="#2196f3" fillOpacity={0.6} />
                     </ScatterChart>
                 </ResponsiveContainer>
-            </Box>
+            </Box> */}
 
             <Box sx={{ height: 200 }}>
                 <Typography variant="body2" color="text.secondary" mb={1}>PnL by Duration (Hours)</Typography>
@@ -65,8 +65,8 @@ const TimeAnalysisCharts: React.FC<TimeAnalysisChartsProps> = ({ durationData, t
                             tick={{ fontSize: 11, fill: '#888' }}
                             tickFormatter={(v) => `$${v}`}
                         />
-                        <Tooltip 
-                            cursor={{ strokeDasharray: '3 3' }} 
+                        <Tooltip
+                            cursor={{ strokeDasharray: '3 3' }}
                             contentStyle={{ backgroundColor: '#1E293B', color: '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}
                             itemStyle={{ color: '#fff' }}
                             labelStyle={{ color: '#fff' }}
